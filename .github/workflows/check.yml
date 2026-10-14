@@ -13,4 +13,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - run: npx --yes prettier@3.9.9 --check .
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm test
