@@ -1,0 +1,16 @@
+---
+// Pixel of the Metrika counter for visitors without JavaScript. Goes into <body>: an <img>
+// isn't allowed in <noscript> inside <head>. img-src for it comes from metrika.astro.
+import { metrikaPixel } from './metrika.js'
+
+type Props = {
+	/** Counter number from Yandex Metrika, the same as in metrika.astro. */
+	id: number
+}
+---
+
+<noscript>
+	<div>
+		<img src={metrikaPixel(Astro.props.id)} style="position:absolute; left:-9999px;" alt="" />
+	</div>
+</noscript>

@@ -1,0 +1,22 @@
+---
+// Yandex Metrika counter. Goes into <head>: it puts its own hash and the Yandex
+// sources into the page CSP, and Astro writes the CSP <meta> after the head
+// content, so from <body> it's too late. The no-JS pixel is metrika-pixel.astro.
+import { metrikaCsp, metrikaScript, scriptHash } from './metrika.js'
+
+type Props = {
+	/** Counter number from Yandex Metrika. */
+	id: number
+	/** ym init options on top of the defaults, e.g. `{ webvisor: true }`. */
+	init?: Record<string, unknown>
+}
+
+const { id, init } = Astro.props
+const code = metrikaScript(id, init)
+
+Astro.csp?.insertScriptHash(scriptHash(code))
+for (const resource of metrikaCsp.scriptResources) Astro.csp?.insertScriptResource(resource)
+for (const directive of metrikaCsp.directives) Astro.csp?.insertDirective(directive)
+---
+
+<script is:inline set:html={code} />
