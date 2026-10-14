@@ -17,26 +17,49 @@ const FAINT = 0.35
 const COVER = 0.33
 
 /**
+ * What a frame reads from the page before it writes anything: the button centers and their
+ * target schemes, the viewport and the current scheme. Reading after a write would force the
+ * browser to lay out the page again for every button.
+ * @typedef {object} View
+ * @property {Scheme} current
+ * @property {number} width
+ * @property {number} height
+ * @property {Map<HTMLElement, { x: number, y: number, scheme: Scheme | undefined }>} spots
+ */
+
+/**
  * Peeks on the page. A switch with a button per theme has several of them side by side: the
  * circle belongs only to the button nearest the pointer, so they don't stack.
- * @type {Map<HTMLElement, { update: () => void, live: () => boolean }>}
+ * @type {Map<HTMLElement, { target: (current: Scheme) => Scheme | undefined, hovered: boolean, render: (view: View) => void, settle: (event: TransitionEvent) => void }>}
  */
 const peeks = new Map()
 /** After a click every circle is out until the pointer comes onto one of the buttons again. */
 let dismissed = false
+/** @type {{ x: number, y: number } | undefined} */
+let pointer
+/** The frame already asked for: events between two frames are drawn once. */
+let frame = 0
 
-/**
- * @param {HTMLElement} anchor
- * @param {{ x: number, y: number }} pointer
- */
-function distance(anchor, pointer) {
-	const rect = anchor.getBoundingClientRect()
-
-	return Math.hypot(pointer.x - rect.left - rect.width / 2, pointer.y - rect.top - rect.height / 2)
+function schedule() {
+	frame ||= requestAnimationFrame(renderAll)
 }
 
-function updateAll() {
-	for (const { update } of peeks.values()) update()
+function renderAll() {
+	frame = 0
+
+	const current = currentScheme()
+	/** @type {View['spots']} */
+	const spots = new Map()
+
+	for (const [anchor, { target }] of peeks) {
+		const rect = anchor.getBoundingClientRect()
+
+		spots.set(anchor, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, scheme: target(current) })
+	}
+
+	const view = { current, width: document.documentElement.clientWidth, height: innerHeight, spots }
+
+	for (const { render } of peeks.values()) render(view)
 }
 
 /**
@@ -145,40 +168,106 @@ function fill(copy, scheme) {
 	for (const [node, twin] of pairs) copyState(node, twin)
 }
 
+/** @param {PointerEvent} event */
+function onMove(event) {
+	pointer = { x: event.clientX, y: event.clientY }
+	schedule()
+}
+
+function onLeaveWindow() {
+	pointer = undefined
+
+	for (const entry of peeks.values()) entry.hovered = false
+
+	schedule()
+}
+
+/** @param {TransitionEvent} event */
+function onTransitionEnd(event) {
+	for (const { settle } of peeks.values()) settle(event)
+}
+
+/** The page listeners are shared by all the peeks: on while there is at least one. */
+function listen() {
+	addEventListener('pointermove', onMove, { passive: true })
+	addEventListener('scroll', schedule, { passive: true })
+	addEventListener('resize', schedule)
+	addEventListener('transitionend', onTransitionEnd)
+	document.documentElement.addEventListener('pointerleave', onLeaveWindow)
+}
+
+function unlisten() {
+	removeEventListener('pointermove', onMove)
+	removeEventListener('scroll', schedule)
+	removeEventListener('resize', schedule)
+	removeEventListener('transitionend', onTransitionEnd)
+	document.documentElement.removeEventListener('pointerleave', onLeaveWindow)
+	cancelAnimationFrame(frame)
+	frame = 0
+	pointer = undefined
+}
+
 /**
  * Attaches the peek to a theme button. Works as a Svelte attachment as is:
  * `{@attach themePeek}`; returns the cleanup.
  * @param {HTMLElement} anchor
- * @param {{ target?: () => Scheme | undefined }} [options] `target` is the scheme the circle
- * shows, the opposite of the current one by default. When it matches the current scheme there
- * is nothing to show and the circle stays hidden.
+ * @param {{ target?: (current: Scheme) => Scheme | undefined }} [options] `target` is the
+ * scheme the circle shows, the opposite of the current one by default. When it matches the
+ * current scheme there is nothing to show and the circle stays hidden.
  * @returns {(() => void) | undefined}
  */
-export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ? 'light' : 'dark') } = {}) {
+export function themePeek(anchor, { target = (current) => (current === 'dark' ? 'light' : 'dark') } = {}) {
 	// Without a mouse there is nothing to approach with, and reduced motion asks for no circle.
 	if (!matchMedia('(hover: hover)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
 	/** @type {HTMLElement | undefined} */
 	let peek
-	/** @type {{ x: number, y: number } | undefined} */
-	let pointer
-	let hovered = false
+	/** The open radius for the last center and viewport: it only changes on scroll and resize. */
+	let open = { key: '', r: 0 }
+
+	const entry = { target, hovered: false, render, settle }
 
 	/**
 	 * @param {number} cx
 	 * @param {number} cy
+	 * @param {number} width
+	 * @param {number} height
 	 */
-	function shape(cx, cy) {
-		if (dismissed || !live()) return { r: 0, opacity: 0 }
+	function openRadius(cx, cy, width, height) {
+		const key = `${cx} ${cy} ${width} ${height}`
 
-		if (hovered) return { r: coverRadius(cx, cy, document.documentElement.clientWidth, innerHeight), opacity: 1 }
+		if (open.key !== key) open = { key, r: coverRadius(cx, cy, width, height) }
+
+		return open.r
+	}
+
+	/**
+	 * Whether a button has anything to show: its scheme differs from the current one.
+	 * @param {View} view
+	 * @param {HTMLElement} button
+	 */
+	function live(view, button) {
+		const scheme = view.spots.get(button)?.scheme
+
+		return Boolean(scheme) && scheme !== view.current
+	}
+
+	/** @param {View} view */
+	function shape(view) {
+		const { x: cx, y: cy } = /** @type {{ x: number, y: number }} */ (view.spots.get(anchor))
+
+		if (dismissed || !live(view, anchor)) return { r: 0, opacity: 0 }
+
+		if (entry.hovered) return { r: openRadius(cx, cy, view.width, view.height), opacity: 1 }
 
 		if (!pointer) return { r: 0, opacity: 0 }
 
 		const own = Math.hypot(pointer.x - cx, pointer.y - cy)
 
-		for (const [other, { live: otherLive }] of peeks) {
-			if (other !== anchor && otherLive() && distance(other, pointer) < own) return { r: 0, opacity: 0 }
+		for (const [other, spot] of view.spots) {
+			if (other !== anchor && live(view, other) && Math.hypot(pointer.x - spot.x, pointer.y - spot.y) < own) {
+				return { r: 0, opacity: 0 }
+			}
 		}
 
 		const closeness = Math.max(0, 1 - own / REACH)
@@ -187,19 +276,13 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 		return { r: NEAR * closeness ** 2, opacity: FAINT * closeness }
 	}
 
-	/** Whether the button has anything to show: its scheme differs from the current one. */
-	function live() {
-		const scheme = target()
+	/** @param {View} view */
+	function render(view) {
+		const spot = view.spots.get(anchor)
 
-		return Boolean(scheme) && scheme !== currentScheme()
-	}
+		if (!spot) return
 
-	function update() {
-		const rect = anchor.getBoundingClientRect()
-		const cx = rect.left + rect.width / 2
-		const cy = rect.top + rect.height / 2
-		const scheme = target()
-		const { r, opacity } = shape(cx, cy)
+		const { r, opacity } = shape(view)
 
 		if (!r && !peek) return
 
@@ -212,25 +295,25 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 		}
 
 		// A shrinking circle keeps its old copy; a fresh copy is taken only for a growing one.
-		if (r && scheme && peek.dataset.scheme !== scheme) {
+		if (r && spot.scheme && peek.dataset.scheme !== spot.scheme) {
 			const first = !peek.dataset.scheme
 
-			fill(peek, scheme)
+			fill(peek, spot.scheme)
 
 			// The first frame has a zero circle, otherwise the transition has nothing to grow from.
 			if (first) peek.getBoundingClientRect()
 		}
 
 		// The copy scrolls with the page, so the center is in document coordinates.
-		peek.style.setProperty('--peek-x', `${cx + scrollX}px`)
-		peek.style.setProperty('--peek-y', `${cy + scrollY}px`)
+		peek.style.setProperty('--peek-x', `${spot.x + scrollX}px`)
+		peek.style.setProperty('--peek-y', `${spot.y + scrollY}px`)
 		peek.style.setProperty('--peek-r', `${r}px`)
 		peek.style.opacity = String(opacity)
-		peek.classList.toggle('theme-peek--open', hovered && r > 0)
+		peek.classList.toggle('theme-peek--open', entry.hovered && r > 0)
 	}
 
 	/** @param {TransitionEvent} event */
-	function onTransitionEnd(event) {
+	function settle(event) {
 		if (
 			peek &&
 			event.target === peek &&
@@ -242,52 +325,35 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 		}
 	}
 
-	/** @param {PointerEvent} event */
-	function onMove(event) {
-		pointer = { x: event.clientX, y: event.clientY }
-		update()
-	}
-
-	function onLeaveWindow() {
-		pointer = undefined
-		hovered = false
-		update()
-	}
-
 	function onEnter() {
-		hovered = true
+		entry.hovered = true
 		dismissed = false
-		updateAll()
+		schedule()
 	}
 
 	function onLeave() {
-		hovered = false
-		update()
+		entry.hovered = false
+		schedule()
 	}
 
 	// The choice is made: the circle has done its job and goes out.
 	function onClick() {
 		dismissed = true
-		updateAll()
+		schedule()
 	}
 
-	peeks.set(anchor, { update, live })
-	addEventListener('pointermove', onMove, { passive: true })
-	addEventListener('scroll', update, { passive: true })
-	addEventListener('resize', update)
-	addEventListener('transitionend', onTransitionEnd)
-	document.documentElement.addEventListener('pointerleave', onLeaveWindow)
+	if (!peeks.size) listen()
+
+	peeks.set(anchor, entry)
 	anchor.addEventListener('pointerenter', onEnter)
 	anchor.addEventListener('pointerleave', onLeave)
 	anchor.addEventListener('click', onClick)
 
 	return () => {
 		peeks.delete(anchor)
-		removeEventListener('pointermove', onMove)
-		removeEventListener('scroll', update)
-		removeEventListener('resize', update)
-		removeEventListener('transitionend', onTransitionEnd)
-		document.documentElement.removeEventListener('pointerleave', onLeaveWindow)
+
+		if (!peeks.size) unlisten()
+
 		anchor.removeEventListener('pointerenter', onEnter)
 		anchor.removeEventListener('pointerleave', onLeave)
 		anchor.removeEventListener('click', onClick)
