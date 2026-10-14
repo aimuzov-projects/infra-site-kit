@@ -21,7 +21,8 @@ runs:
   using: composite
   steps:
     # The server knows what to do: the key in authorized_keys is bound to deploy/remote.sh
-    # of the site, so we don't pass a command to ssh.
+    # of the site, so we don't pass a command to ssh. While the deploy waits in the queue
+    # of the server, the connection is silent: keepalives hold it and notice a dead one.
     - name: Deploy on server
       shell: bash
       env:
@@ -33,7 +34,8 @@ runs:
         printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
         chmod 600 ~/.ssh/deploy
         printf '%s\n' "$KNOWN_HOST" > ~/.ssh/known_hosts
-        ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes "root@$HOST"
+        ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes \
+          -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "root@$HOST"
 
     - name: Check site
       shell: bash
