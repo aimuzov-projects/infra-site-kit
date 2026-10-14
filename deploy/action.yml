@@ -20,8 +20,8 @@ inputs:
 runs:
   using: composite
   steps:
-    # The server knows what to do: the key in authorized_keys is bound to deploy/remote.sh
-    # of the site, so we don't pass a command to ssh. While the deploy waits in the queue
+    # The server knows what to do: the key in authorized_keys runs deploy/site.sh of
+    # infra-server for the site, so we don't pass a command to ssh. While the deploy waits in the queue
     # of the server, the connection is silent: keepalives hold it and notice a dead one.
     - name: Deploy on server
       shell: bash

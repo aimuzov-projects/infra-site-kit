@@ -7,7 +7,7 @@ Shared CI and linter configs for the aimuzov-projects sites built from [infra-si
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test` and the build. Packages from Ubuntu go in `apt-packages`.
-- [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs the site's `deploy/remote.sh`, then waits for `url` to answer. The server address and its `known_hosts` line live here.
+- [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer. The server address and its `known_hosts` line live here.
 
 They are composite actions, not reusable workflows: the job stays in the site, so the required `check` status keeps its name, and a site adds its own steps before or after.
 
