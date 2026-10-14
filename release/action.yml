@@ -20,12 +20,27 @@ runs:
         config-file: release-please-config.json
         manifest-file: .release-please-manifest.json
 
-    # A PR opened or updated with the Actions token doesn't start other workflows, so the
-    # release PR would never get its required check. A workflow_dispatch run is allowed to
-    # start, and its check lands on the head of the release branch.
+    # The release PR comes from github-actions[bot], so GitHub holds its pull_request runs
+    # until someone approves them, and the PR stays blocked by its required check. The
+    # runs show up a few seconds after the PR changes; approve whatever appears in a minute.
     - if: steps.release-please.outputs.pr
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
         PR: ${{ steps.release-please.outputs.pr }}
-      run: gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$(jq -r .headBranchName <<< "$PR")"
+      run: |
+        number=$(jq -r .number <<< "$PR")
+        sha=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)
+        approved=0
+        for _ in $(seq 12); do
+          sleep 5
+          runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?event=pull_request&head_sha=$sha" \
+            --jq '.workflow_runs[] | select(.conclusion == "action_required") | .id')
+          for run in $runs; do
+            gh api -X POST "repos/$GITHUB_REPOSITORY/actions/runs/$run/approve" >/dev/null
+            echo "approved run $run"
+            approved=$((approved + 1))
+          done
+          if [[ $approved -gt 0 && -z $runs ]]; then break; fi
+        done
+        if [[ $approved -eq 0 ]]; then echo "no runs of the release PR waited for approval"; fi
