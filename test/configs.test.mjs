@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import test from 'node:test'
 
@@ -51,4 +51,22 @@ test('oxlint takes the rules and plugins through extends', (t) => {
 	writeFileSync(join(dir, 'a.ts'), 'export interface A {\n\ta: string\n}\n')
 	const run = () => execFileSync('npx', ['oxlint', '--deny-warnings', dir], { cwd: site, stdio: 'pipe' })
 	assert.throws(run, (error) => String(error.stdout).includes('consistent-type-definitions'))
+})
+
+test('oxlint wants blank lines around blocks and before return, and fixes them', (t) => {
+	const dir = mkdtempSync(join(site, 'tmp-'))
+	t.after(() => rmSync(dir, { recursive: true }))
+	const file = join(dir, 'a.ts')
+	writeFileSync(
+		file,
+		'export const f = (a: number) => {\n\tconst b = a + 1\n\tif (b) {\n\t\ta++\n\t}\n\treturn b\n}\n',
+	)
+	const run = (...args) => execFileSync('npx', ['oxlint', ...args, dir], { cwd: site, stdio: 'pipe' })
+	assert.throws(
+		() => run('--deny-warnings'),
+		(error) => String(error.stdout).includes('padding-line-between-statements'),
+	)
+	run('--fix')
+	const fixed = 'export const f = (a: number) => {\n\tconst b = a + 1\n\n\tif (b) {\n\t\ta++\n\t}\n\n\treturn b\n}\n'
+	assert.equal(readFileSync(file, 'utf8'), fixed)
 })

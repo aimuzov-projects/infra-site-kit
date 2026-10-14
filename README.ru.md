@@ -50,12 +50,14 @@ jobs:
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.1.0
+npm install -D github:aimuzov-projects/infra-site-kit#v1.2.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
 - `stylelint.config.mjs`: `export default { extends: ['@aimuzov-projects/infra-site-kit/stylelint'] }`, свои `overrides` сайта — рядом с `extends`
 - `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov-projects/infra-site-kit/oxlint.json"] }`
+
+Конфиг oxlint требует пустую строку перед `return` и `throw`, вокруг блоков (`if`, циклы, `try`, `switch`), после групп `const`/`let` и вокруг многострочных выражений. Расставляет их `oxlint --fix`; Prettier их только сохраняет, поэтому сайт запускает `oxlint --fix` перед `prettier --write`.
 
 npm забирает пакет архивом с GitHub, так что git в образе сборки не нужен.
 
