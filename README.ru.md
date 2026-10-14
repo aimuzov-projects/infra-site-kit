@@ -7,7 +7,7 @@
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test` и сборка. Пакеты из Ubuntu передаются в `apt-packages`.
-- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) держит релизный PR с changelog из conventional-коммитов; мерж этого PR создаёт тег и GitHub Release, а action отдаёт `created` и `tag`. PR, открытый токеном Actions, не запускает workflow, поэтому action сам запускает `check.yml` на релизной ветке.
+- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) держит релизный PR с changelog из conventional-коммитов; мерж этого PR создаёт тег и GitHub Release, а action отдаёт `created` и `tag`. Релизный PR открывает `github-actions[bot]`, поэтому GitHub придерживает его прогоны `pull_request` до одобрения; action их одобряет, иначе обязательный чек так и не придёт.
 - [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`. `ref` — тег релиза для выкладки, пустой выкладывает свежий `main`. Адрес сервера и его строка `known_hosts` живут здесь.
 
 Это composite actions, а не reusable workflows: job остаётся в сайте, поэтому обязательный статус `check` не меняет имя, а сайт добавляет свои шаги до или после.
@@ -24,8 +24,6 @@ jobs:
     steps:
       - uses: aimuzov-projects/infra-site-kit/check@v1
 ```
-
-В триггерах `.github/workflows/check.yml` нужен ещё `workflow_dispatch` — для проверки релизного PR.
 
 `.github/workflows/deploy.yml`, выкладка по релизу:
 

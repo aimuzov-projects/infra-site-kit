@@ -7,7 +7,7 @@ Shared CI and linter configs for the aimuzov-projects sites built from [infra-si
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test` and the build. Packages from Ubuntu go in `apt-packages`.
-- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) keeps the release PR up to date with the changelog from conventional commits; merging it cuts a tag and a GitHub release, the action then outputs `created` and `tag`. A PR opened with the Actions token starts no workflows, so the action runs `check.yml` on the release branch itself.
+- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) keeps the release PR up to date with the changelog from conventional commits; merging it cuts a tag and a GitHub release, the action then outputs `created` and `tag`. The release PR comes from `github-actions[bot]`, so GitHub holds its `pull_request` runs for approval; the action approves them, otherwise the required check would never come.
 - [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer. `ref` is the release tag to deploy, empty deploys the newest `main`. The server address and its `known_hosts` line live here.
 
 They are composite actions, not reusable workflows: the job stays in the site, so the required `check` status keeps its name, and a site adds its own steps before or after.
@@ -24,8 +24,6 @@ jobs:
     steps:
       - uses: aimuzov-projects/infra-site-kit/check@v1
 ```
-
-`.github/workflows/check.yml` also needs `workflow_dispatch` among its triggers, for the check of the release PR.
 
 `.github/workflows/deploy.yml`, a deploy by release:
 
