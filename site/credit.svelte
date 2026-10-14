@@ -28,7 +28,7 @@
      line right away. -->
 <span class={['credit', `credit--${align}`, className]}>
 	<span class="credit__peek" aria-hidden="true">
-		<svg class="credit__icon credit__icon--peek" viewBox="-3 0 30.1 24" width="20" height="16" fill="currentColor">
+		<svg class="credit__icon credit__icon--peek credit__icon--mark" viewBox="-3 0 30.1 24" width="20" height="16" fill="currentColor">
 			<path fill-rule="evenodd" d={MARK} />
 		</svg>
 	</span>
@@ -39,7 +39,7 @@
 			{#if copyright}<span class="credit__year"><span data-year>{year}</span> ©</span>{/if}
 			Сделано с&nbsp;любовью
 			<a class="credit__link" href="https://github.com/aimuzov" target="_blank" rel="noopener"
-				><svg class="credit__icon" viewBox="-3 0 30.1 24" width="20" height="16" fill="currentColor" aria-hidden="true"
+				><svg class="credit__icon credit__icon--mark" viewBox="-3 0 30.1 24" width="20" height="16" fill="currentColor" aria-hidden="true"
 					><path fill-rule="evenodd" d={MARK} /></svg
 				>aimuzov</a
 			>
@@ -110,6 +110,40 @@
 				height: 1.4em;
 				margin: 0;
 			}
+
+			/* The face sits still and wiggles its mustache once every five seconds. */
+			&--mark {
+				transform-origin: 50% 70%;
+				animation: wiggle 5s ease-in-out infinite;
+			}
+		}
+	}
+
+	@keyframes wiggle {
+		0%,
+		86%,
+		100% {
+			transform: rotate(0);
+		}
+
+		88% {
+			transform: rotate(-14deg);
+		}
+
+		90% {
+			transform: rotate(12deg);
+		}
+
+		92% {
+			transform: rotate(-9deg);
+		}
+
+		94% {
+			transform: rotate(6deg);
+		}
+
+		96% {
+			transform: rotate(-3deg);
 		}
 	}
 
@@ -155,6 +189,10 @@
 		.credit__peek,
 		.credit__line {
 			transition: none;
+		}
+
+		.credit__icon--mark {
+			animation: none;
 		}
 	}
 </style>
