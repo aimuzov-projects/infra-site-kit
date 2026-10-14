@@ -3,14 +3,14 @@ import stylelint from 'stylelint'
 import { propertyGroups } from 'stylelint-config-clean-order'
 import order from 'stylelint-order'
 
-// BEM only: class names follow block__elem--mod and no tags inside blocks.
+// Только БЭМ: классы вида block__elem--mod и никаких тегов внутри блоков.
 const name = '[a-z][a-z0-9]*(?:-[a-z0-9]+)*'
 const mod = '[a-z0-9]+(?:-[a-z0-9]+)*'
 const bem = new RegExp(`^${name}(?:__${name})?(?:--${mod})?$`)
 
-// The built-in selector-class-pattern doesn't see &__elem (it skips selectors
-// without a dot), and Stylelint 17 dropped resolveNestedSelectors.
-// So we join & with the parent ourselves, like postcss-nested does.
+// Встроенный `selector-class-pattern` не видит `&__elem` (селекторы без точки
+// он пропускает), а в Stylelint 17 убрали `resolveNestedSelectors`. Поэтому
+// склеиваем `&` с родителем сами, так же как это делает postcss-nested.
 const ruleName = 'local/bem-class'
 const messages = stylelint.utils.ruleMessages(ruleName, {
 	rejected: (cls) => `Class ".${cls}" is not BEM: block__elem--mod`,
@@ -29,6 +29,7 @@ const bemClass = stylelint.createPlugin(ruleName, (on) => (root, result) => {
 	if (!on) return
 	root.walkRules((rule) => {
 		if (rule.parent?.type === 'atrule' && rule.parent.name.endsWith('keyframes')) return
+		// Один и тот же класс репортим один раз на правило, даже если он в нескольких селекторах.
 		const seen = new Set()
 		for (const selector of resolve(rule))
 			for (const [, cls] of selector.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) {
@@ -39,17 +40,21 @@ const bemClass = stylelint.createPlugin(ruleName, (on) => (root, result) => {
 	})
 })
 
-// The syntax goes in as a module: postcss-html is a dependency of the kit,
-// and the site may not see it by name.
+/**
+ * Общий конфиг Stylelint для сайтов.
+ *
+ * Синтаксис подключаем модулем потому что postcss-html -- зависимость кита,
+ * и сайт может не видеть его по имени.
+ */
 export default {
 	customSyntax: postcssHtml,
 	plugins: [bemClass, order],
 	rules: {
 		[ruleName]: true,
-		// A block reads top to bottom: own properties, its @media rules, then its elements.
+		// Блок читается сверху вниз: свои свойства, его `@media`, потом его элементы.
 		'order/order': ['custom-properties', 'declarations', { type: 'at-rule', name: 'media' }, 'rules'],
-		// clean-order groups (position, layout, size, text, look, animation),
-		// but without empty lines between them.
+		// Группы из clean-order (позиционирование, раскладка, размеры, текст, внешний вид, анимация),
+		// но без пустых строк между ними.
 		'order/properties-order': [propertyGroups.map((properties) => ({ properties })), { unspecified: 'bottom' }],
 		'selector-max-type': [
 			0,
@@ -58,7 +63,7 @@ export default {
 	},
 	overrides: [
 		{ files: ['**/*.css'], customSyntax: null },
-		// Base tag styles live here, they aren't block elements.
+		// Здесь живут базовые стили тегов, это не элементы блоков.
 		{ files: ['src/frontend/styles/global.css'], rules: { 'selector-max-type': null } },
 	],
 }

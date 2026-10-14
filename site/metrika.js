@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto'
 
-// Yandex Metrika for the sites. On mobile the ~85 KB counter script steals bandwidth from
-// fonts and the first photo, so it loads on first interaction or 4 s after load, earlier
-// ym calls are queued. Webvisor is off: on mobile it noticeably raises LCP.
+// Яндекс Метрика для сайтов. На мобилках скрипт счётчика (~85 КБ) отъедает канал
+// у шрифтов и первой фотографии, поэтому он грузится на первое взаимодействие
+// или через 4 с после load, а вызовы ym до этого копятся в очереди.
+// Вебвизор выключен: на мобилках он заметно поднимает LCP.
 
-// Runs in the page as is, so it's ES5 like the stock snippet.
+// Выполняется на странице как есть, поэтому ES5, как и штатный сниппет.
 function loader(m, e, t, r, i, k, a) {
 	m[i] =
 		m[i] ||
@@ -14,6 +15,7 @@ function loader(m, e, t, r, i, k, a) {
 
 	m[i].l = 1 * new Date()
 
+	// Скрипт счётчика уже на странице -- второй раз не грузим.
 	for (var j = 0; j < document.scripts.length; j++) {
 		if (document.scripts[j].src === r) {
 			return
@@ -56,7 +58,7 @@ const defaults = {
 	trackLinks: true,
 }
 
-/** What the counter needs in the CSP on top of the site's own sources. */
+/** Что нужно счётчику в CSP сверх собственных источников сайта. */
 export const metrikaCsp = {
 	scriptResources: ['https://mc.yandex.ru', 'https://yastatic.net'],
 	directives: [
@@ -68,11 +70,16 @@ export const metrikaCsp = {
 }
 
 const checkId = (id) => {
-	// The id goes into the script text, so it has to be a plain counter number.
+	// id подставляется прямо в текст скрипта, поэтому это должен быть просто номер счётчика.
 	if (!Number.isSafeInteger(id) || id <= 0) throw new TypeError(`Metrika counter id must be a number, got ${id}`)
 }
 
-/** Body of the inline script: the lazy loader and the counter init, `init` overrides the defaults. */
+/**
+ * Тело инлайн-скрипта: ленивый загрузчик и инициализация счётчика.
+ *
+ * @param id - Номер счётчика в Яндекс Метрике.
+ * @param init - Опции `ym(id, 'init')`, перекрывают значения по умолчанию.
+ */
 export function metrikaScript(id, init = {}) {
 	checkId(id)
 	const url = `https://mc.yandex.ru/metrika/tag.js?id=${id}`
@@ -84,12 +91,16 @@ export function metrikaScript(id, init = {}) {
 	].join('\n')
 }
 
-/** Address of the pixel for visitors without JavaScript. */
+/**
+ * Адрес пикселя для посетителей без JavaScript.
+ *
+ * @param id - Номер счётчика в Яндекс Метрике.
+ */
 export function metrikaPixel(id) {
 	checkId(id)
 
 	return `https://mc.yandex.ru/watch/${id}`
 }
 
-/** CSP hash of an inline script with this exact body, in the form Astro.csp takes. */
+/** CSP-хеш инлайн-скрипта ровно с таким телом, в том виде, в каком его принимает `Astro.csp`. */
 export const scriptHash = (code) => `sha256-${createHash('sha256').update(code).digest('base64')}`

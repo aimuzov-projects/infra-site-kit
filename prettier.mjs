@@ -1,13 +1,16 @@
 import { fileURLToPath } from 'node:url'
 
-// Plugins go in as paths resolved from here: they are dependencies of the kit, and the
-// site may not see them by name. Not as modules: the CLI copies the config and trips the
-// lazy getters of sort-imports, which want optional ember and oxc plugins.
+// Плагины подключаем путями, которые резолвим отсюда: это зависимости кита,
+// и сайт может не видеть их по имени. Не модулями потому что CLI копирует конфиг
+// и дёргает ленивые геттеры sort-imports, а им нужны опциональные плагины ember и oxc.
 const plugin = (name) => fileURLToPath(import.meta.resolve(name))
 const astro = plugin('prettier-plugin-astro')
 const svelte = plugin('prettier-plugin-svelte')
 const sortImports = plugin('@ianvs/prettier-plugin-sort-imports')
 
+/**
+ * Общий конфиг Prettier для сайтов.
+ */
 export default {
 	useTabs: true,
 	semi: false,
@@ -21,6 +24,7 @@ export default {
 			files: ['*.ts', '*.mjs', '*.js'],
 			options: {
 				plugins: [sortImports],
+				// `''` -- пустая строка между группами: модули, затем `#`-импорты, затем относительные.
 				importOrder: ['<BUILTIN_MODULES>', '<THIRD_PARTY_MODULES>', '', '^#', '', '^[.]'],
 			},
 		},

@@ -4,8 +4,8 @@ import { join } from 'node:path'
 
 import { metrikaScript } from '../../site/metrika.js'
 
-// A two-page site for the e2e checks of the kit: a sitemap with the production domain, a theme
-// button with theme-peek.js and the lazy Metrika, the way the sites have them after a build.
+// Двухстраничный сайт для e2e-проверок кита: sitemap с продовым доменом, кнопка темы
+// с `theme-peek.js` и ленивая Метрика. Всё как у сайтов после сборки.
 
 const root = join(import.meta.dirname, '../..')
 const port = Number(process.env.E2E_PORT ?? 4399)
@@ -93,7 +93,7 @@ createServer((request, response) => {
 
 			return
 		} catch {
-			// Falls through to 404.
+			// Файла нет, проваливаемся в 404 ниже.
 		}
 	}
 

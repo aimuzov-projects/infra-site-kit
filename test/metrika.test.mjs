@@ -6,7 +6,8 @@ import vm from 'node:vm'
 
 import { metrikaPixel, metrikaScript, scriptHash } from '../site/metrika.js'
 
-// A page stub: enough DOM for the loader to wire itself up and to see what it inserts.
+// Заглушка страницы: DOM ровно настолько, чтобы загрузчик подключился
+// и было видно, что он вставляет.
 const page = () => {
 	const listeners = {}
 	const inserted = []

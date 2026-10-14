@@ -15,6 +15,8 @@ runs:
       with:
         node-version-file: package.json
         cache: npm
+    # NOTE: `$PACKAGES` без кавычек намеренно, список через пробел
+    # должен разбиться на отдельные аргументы.
     - if: inputs.apt-packages != ''
       shell: bash
       env:
@@ -32,6 +34,6 @@ runs:
       run: npm run check
     - shell: bash
       run: npm test
-    # The site is built on the server, but it's better for the build to fail here.
+    # Сайт собирается на сервере, но лучше, чтобы сборка упала здесь.
     - shell: bash
       run: npm run build

@@ -1,10 +1,10 @@
 import { defineConfig, devices } from '@playwright/test'
 
-// The e2e preset of the sites: the tests in e2e/ run in Chromium against the production
-// build served by `astro preview`. A site extends it with defineConfig(preset, { … }).
+// E2e-пресет для сайтов: тесты из `e2e/` гоняются в Chromium против продовой сборки,
+// которую раздаёт `astro preview`. Сайт расширяет его через `defineConfig(preset, { ... })`.
 
 const ci = Boolean(process.env.CI)
-/** Not Astro's 4321: that one is usually taken by a dev server of some site. */
+/** Не астровский 4321: его обычно уже занимает dev-сервер какого-нибудь сайта. */
 const port = Number(process.env.E2E_PORT ?? 4399)
 const baseURL = `http://localhost:${port}`
 
@@ -23,8 +23,9 @@ export default defineConfig({
 	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 
 	webServer: {
-		// A fresh build every run, so the tests always see the current sources. Astro sends a
-		// server started by an AI agent to the background and exits, --ignore-lock keeps it here.
+		// Свежая сборка на каждый прогон, чтобы тесты всегда видели текущие исходники.
+		// Если сервер запускает ИИ-агент, Astro уводит его в фон и сам выходит,
+		// а `--ignore-lock` держит сервер здесь.
 		command: `astro build && astro preview --port ${port} --ignore-lock`,
 		url: baseURL,
 		reuseExistingServer: false,

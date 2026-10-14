@@ -1,56 +1,77 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test'
 
+/** Цветовая схема, в которой нарисована страница. */
 export type Scheme = 'light' | 'dark'
 
+/** Настройки проверки axe. */
 export type A11yOptions = {
-	/** axe rule ids to skip, e.g. `['color-contrast']`. */
+	/** Id правил axe, которые пропускаем, например `['color-contrast']`. */
 	disableRules?: string[]
-	/** Selectors of the parts of the page axe leaves out. */
+	/** Селекторы частей страницы, которые axe не проверяет. */
 	exclude?: string[]
 }
 
+/** Настройки проверки переключателя темы. */
 export type ThemeOptions = {
-	/** Page to check on, `/` by default. */
+	/** Страница, на которой проверяем, по умолчанию `/`. */
 	path?: string
-	/** Whether the chosen scheme survives a reload, `true` by default. */
+	/** Проверять, что выбор схемы переживает перезагрузку, по умолчанию `true`. */
 	persist?: boolean
 }
 
-/** Paths of the pages listed in the sitemap, sorted. */
+/**
+ * Пути страниц, перечисленных в sitemap, отсортированные.
+ *
+ * Продовый домен из адресов отбрасывается, страницы запрашиваются у тестируемого сервера.
+ *
+ * @param index - Индекс sitemap, по умолчанию `/sitemap-index.xml`.
+ */
 export function sitemapPaths(request: APIRequestContext, index?: string): Promise<string[]>
 
-/** Opens the page; it answers 200 and logs no errors to the console. */
+/**
+ * Открывает страницу и проверяет, что она отвечает 200 и не пишет ошибок в консоль.
+ *
+ * @param options.ignore - Ошибки консоли, которые пропускаем.
+ */
 export function expectHealthyPage(page: Page, path: string, options?: { ignore?: RegExp[] }): Promise<void>
 
-/** axe over the open page against WCAG 2.1 AA. */
+/** Прогоняет axe по уже открытой странице на соответствие WCAG 2.1 AA. */
 export function expectAccessible(page: Page, options?: A11yOptions): Promise<void>
 
-/** The scheme the page is drawn in now, the way theme-peek.js reads it. */
+/** Схема, в которой страница нарисована сейчас. Читается так же, как в `theme-peek.js`. */
 export function pageScheme(page: Page): Promise<Scheme>
 
-/** Clicking the theme button changes the scheme, and the choice survives a reload. */
+/**
+ * Проверяет, что клик по кнопке темы меняет схему, а выбор переживает перезагрузку.
+ *
+ * Кликает до трёх раз, так как переключатель может сначала пройти через "как в системе".
+ */
 export function expectThemeToggle(page: Page, button: Locator, options?: ThemeOptions): Promise<void>
 
-/** Hovering the theme button opens the circle of theme-peek.js, a click puts it out. */
+/** Наведение на кнопку темы раскрывает круг `theme-peek.js`, клик его гасит. */
 export function expectThemePeek(page: Page, button: Locator, options?: { path?: string }): Promise<void>
 
-/** Yandex Metrika is on the page, but tag.js loads only after the first interaction. */
+/**
+ * Проверяет, что Яндекс Метрика есть на странице,
+ * но `tag.js` грузится только после первого взаимодействия.
+ */
 export function expectMetrikaDeferred(page: Page, options?: { path?: string }): Promise<void>
 
-/** Registers the shared checks as tests of the current file. */
+/** Регистрирует общие проверки как тесты текущего файла. */
 export function siteChecks(options?: {
-	/** Every sitemap page answers 200 without console errors, `true` by default. */
+	/** Каждая страница из sitemap отвечает 200 без ошибок в консоли, по умолчанию `true`. */
 	pages?: boolean
-	/** Console errors the pages may log. */
+	/** Ошибки консоли, которые страницам можно писать. */
 	ignoreConsole?: RegExp[]
-	/** axe over every sitemap page in both schemes; `false` turns it off. */
+	/** axe по каждой странице из sitemap в обеих схемах, `false` выключает проверку. */
 	a11y?: false | A11yOptions
-	/** The theme button; without it the theme is not checked. */
+	/** Кнопка темы, без неё тема не проверяется. */
 	theme?: ThemeOptions & {
+		/** Находит кнопку темы на странице. */
 		button: (page: Page) => Locator
-		/** Whether the button has theme-peek.js attached, `true` by default. */
+		/** Подключён ли к кнопке `theme-peek.js`, по умолчанию `true`. */
 		peek?: boolean
 	}
-	/** The Metrika check, on `/` with `true`. */
+	/** Проверка Метрики, с `true` проверяется страница `/`. */
 	metrika?: boolean | { path?: string }
 }): void

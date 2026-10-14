@@ -1,6 +1,11 @@
 import preset from './playwright/config.mjs'
 
-// The kit has no Astro site: the checks run against the fixture site of test/e2e/server.mjs.
+/**
+ * Конфиг Playwright для e2e самого кита.
+ *
+ * В ките нет Astro-сайта, поэтому проверки гоняем по сайту-фикстуре
+ * из `test/e2e/server.mjs`.
+ */
 export default {
 	...preset,
 	testDir: './test/e2e',

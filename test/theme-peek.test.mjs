@@ -5,7 +5,8 @@ import test from 'node:test'
 
 import { coverRadius, themePeek } from '../site/theme-peek.js'
 
-// A page stub: just enough DOM for the peek, with frames that run only when the test says so.
+// Заглушка страницы: DOM ровно настолько, чтобы хватило подглядыванию,
+// а кадры выполняются только когда тест скажет (`page.flush()`).
 const page = {
 	scheme: 'light',
 	hover: true,
@@ -77,7 +78,7 @@ Object.assign(globalThis, {
 	cancelAnimationFrame: (id) => page.frames.delete(id),
 })
 
-/** A theme button whose center is at (x, y). */
+/** Кнопка темы с центром в точке (x, y). */
 const button = (x, y) => element({ left: x - 10, top: y - 10, width: 20, height: 20 })
 const peeks = () => document.body.children.filter((child) => child.classList.contains('theme-peek'))
 const move = (x, y) => page.listeners.pointermove({ clientX: x, clientY: y })

@@ -1,7 +1,7 @@
 /**
- * Puts the current year into the `data-year` elements. Pages are built ahead of time, so the
- * build year would stay until the next deploy; the browser fixes it by the visitor's clock.
- * @param {ParentNode} [root]
+ * Проставляет текущий год в элементы с `data-year`. Страницы собираются заранее, поэтому год
+ * сборки так бы и висел до следующего деплоя, а браузер исправляет его по часам посетителя.
+ * @param {ParentNode} [root] Где искать элементы, по умолчанию весь `document`.
  */
 export function syncYear(root = document) {
 	const year = String(new Date().getFullYear())
