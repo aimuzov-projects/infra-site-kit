@@ -50,7 +50,7 @@ jobs:
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.2.0
+npm install -D github:aimuzov-projects/infra-site-kit#v1.3.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -60,6 +60,24 @@ npm install -D github:aimuzov-projects/infra-site-kit#v1.2.0
 Конфиг oxlint требует пустую строку перед `return` и `throw`, вокруг блоков (`if`, циклы, `try`, `switch`), после групп `const`/`let` и вокруг многострочных выражений. Расставляет их `oxlint --fix`; Prettier их только сохраняет, поэтому сайт запускает `oxlint --fix` перед `prettier --write`.
 
 npm забирает пакет архивом с GitHub, так что git в образе сборки не нужен.
+
+## Строка автора
+
+Общая для всех сайтов подпись: «2026 © Сделано [знак] aimuzov» и, если передан `repo`, ссылка «Исходный код» со знаком GitHub. Знак — лицо с усами одним путём с evenodd, без масок и id, так что копий на странице может быть сколько угодно.
+
+- `credit.astro` — для статичных страниц: та же разметка плюс скрипт, который ставит год по часам посетителя. Без него год из сборки застывает до следующей выкладки. Astro встраивает скрипт в страницу, а его хеш кладёт в CSP вместе с остальными.
+- `credit.svelte` — для Svelte-приложений, где год и так считается в браузере.
+- `year.js` — сам `syncYear()`: проставляет год во все элементы с `data-year`, если у сайта есть свои.
+
+```astro
+---
+import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
+---
+
+<Credit repo="https://github.com/aimuzov-projects/example" />
+```
+
+`copyright={false}` убирает год, если у сайта своя строка с ©. Цвет ссылок при наведении задаёт `--credit-hover`, остальное наследуется от футера.
 
 ## Renovate
 
