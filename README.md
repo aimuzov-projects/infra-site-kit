@@ -50,7 +50,7 @@ jobs:
 The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.3.0
+npm install -D github:aimuzov-projects/infra-site-kit#v1.3.1
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
