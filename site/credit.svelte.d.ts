@@ -7,6 +7,9 @@ declare const Credit: Component<{
 	repo?: string
 	/** Puts the copyright year first, on by default. */
 	copyright?: boolean
+	/** `spread` puts the source on the right edge of the container, `center` keeps both
+	 * parts in the middle. */
+	align?: 'spread' | 'center'
 	class?: string
 }>
 

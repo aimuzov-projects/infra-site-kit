@@ -50,7 +50,7 @@ jobs:
 The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.3.2
+npm install -D github:aimuzov-projects/infra-site-kit#v1.4.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -76,6 +76,10 @@ import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
 
 <Credit repo="https://github.com/aimuzov-projects/example" />
 ```
+
+By default the credit stretches over the container: the author on the left, "Исходный код" on the right. `align="center"` keeps both parts in the middle.
+
+With a mouse only the face peeks out at first, and the line slides up from below on hover or keyboard focus. Touch screens have no hover, so they show the whole line right away.
 
 `copyright={false}` drops the year when the site has its own © line. `--credit-hover` sets the link hover color; everything else is inherited from the footer.
 
