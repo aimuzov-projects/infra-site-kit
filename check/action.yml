@@ -1,0 +1,37 @@
+name: Site check
+description: Install dependencies, then run the formatter, linters, type check, tests and build of an Astro site.
+
+inputs:
+  apt-packages:
+    description: Space-separated Ubuntu packages the tests or the build need, e.g. ffmpeg.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-node@v5
+      with:
+        node-version-file: package.json
+        cache: npm
+    - if: inputs.apt-packages != ''
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.apt-packages }}
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends $PACKAGES
+    - shell: bash
+      run: npm ci
+    - shell: bash
+      run: npm run format:check
+    - shell: bash
+      run: npm run lint:js
+    - shell: bash
+      run: npm run lint:css
+    - shell: bash
+      run: npm run check
+    - shell: bash
+      run: npm test
+    # The site is built on the server, but it's better for the build to fail here.
+    - shell: bash
+      run: npm run build
