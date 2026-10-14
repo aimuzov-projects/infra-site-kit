@@ -50,7 +50,7 @@ jobs:
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.3.2
+npm install -D github:aimuzov-projects/infra-site-kit#v1.4.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -76,6 +76,10 @@ import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
 
 <Credit repo="https://github.com/aimuzov-projects/example" />
 ```
+
+По умолчанию подпись растягивается на ширину контейнера: автор слева, «Исходный код» справа. `align="center"` ставит обе части по центру.
+
+С мышью сначала видно только лицо с усами, а подпись выезжает снизу при наведении или фокусе с клавиатуры. На сенсорных экранах наведения нет, поэтому там подпись видна сразу.
 
 `copyright={false}` убирает год, если у сайта своя строка с ©. Цвет ссылок при наведении задаёт `--credit-hover`, остальное наследуется от футера.
 
