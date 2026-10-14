@@ -1,0 +1,19 @@
+---
+// The credit for static pages: the same markup plus a script that moves the year to the
+// visitor's clock. Svelte apps take credit.svelte directly.
+import Credit from './credit.svelte'
+
+type Props = {
+	repo?: string
+	copyright?: boolean
+	class?: string
+}
+---
+
+<Credit {...Astro.props} />
+
+<script>
+	import { syncYear } from './year.js'
+
+	syncYear()
+</script>
