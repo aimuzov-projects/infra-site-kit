@@ -7,7 +7,7 @@
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test` и сборка. Пакеты из Ubuntu передаются в `apt-packages`.
-- [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/remote.sh` сайта, затем ждёт ответа от `url`. Адрес сервера и его строка `known_hosts` живут здесь.
+- [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`. Адрес сервера и его строка `known_hosts` живут здесь.
 
 Это composite actions, а не reusable workflows: job остаётся в сайте, поэтому обязательный статус `check` не меняет имя, а сайт добавляет свои шаги до или после.
 
