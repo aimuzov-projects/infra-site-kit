@@ -1,25 +1,25 @@
 /**
- * A peek at the other theme from a theme switch. The closer the pointer gets to the button,
- * the wider a faint circle grows around it; on hover the circle opens to a third of the
- * screen. Inside the circle the page is drawn in the other scheme: it is a copy of the page
- * laid over it, and a click puts the circle out until the next hover.
+ * Подглядывание за другой темой из переключателя темы. Чем ближе указатель к кнопке,
+ * тем шире вокруг неё бледный круг, а при наведении круг раскрывается на треть экрана.
+ * Внутри круга страница нарисована в другой схеме: это копия страницы, положенная поверх,
+ * а клик гасит круг до следующего наведения.
  */
 
 /** @typedef {'light' | 'dark'} Scheme */
 
-/** Distance from the button center at which the circle starts to show. */
+/** Расстояние от центра кнопки, с которого круг начинает проявляться. */
 const REACH = 260
-/** Circle radius right at the button: a hint, not yet a preview. */
+/** Радиус круга вплотную к кнопке: это намёк, а ещё не превью. */
 const NEAR = 60
-/** How strongly the other theme shows through at the button; full strength only on hover. */
+/** Насколько другая тема просвечивает у самой кнопки, в полную силу только при наведении. */
 const FAINT = 0.35
-/** Share of the screen the open circle covers. */
+/** Доля экрана, которую закрывает раскрытый круг. */
 const COVER = 0.33
 
 /**
- * What a frame reads from the page before it writes anything: the button centers and their
- * target schemes, the viewport and the current scheme. Reading after a write would force the
- * browser to lay out the page again for every button.
+ * Что кадр читает со страницы до того как что-то в неё пишет: центры кнопок и их целевые
+ * схемы, вьюпорт и текущую схему. Чтение после записи заставило бы браузер заново
+ * раскладывать страницу на каждую кнопку.
  * @typedef {object} View
  * @property {Scheme} current
  * @property {number} width
@@ -28,16 +28,16 @@ const COVER = 0.33
  */
 
 /**
- * Peeks on the page. A switch with a button per theme has several of them side by side: the
- * circle belongs only to the button nearest the pointer, so they don't stack.
+ * Круги на странице. У переключателя с кнопкой на каждую тему их несколько рядом, поэтому
+ * круг достаётся только ближайшей к указателю кнопке, иначе они бы наслаивались.
  * @type {Map<HTMLElement, { target: (current: Scheme) => Scheme | undefined, hovered: boolean, render: (view: View) => void, settle: (event: TransitionEvent) => void }>}
  */
 const peeks = new Map()
-/** After a click every circle is out until the pointer comes onto one of the buttons again. */
+/** После клика все круги погашены, пока указатель снова не зайдёт на одну из кнопок. */
 let dismissed = false
 /** @type {{ x: number, y: number } | undefined} */
 let pointer
-/** The frame already asked for: events between two frames are drawn once. */
+/** Уже запрошенный кадр: события между двумя кадрами отрисовываются один раз. */
 let frame = 0
 
 function schedule() {
@@ -63,8 +63,9 @@ function renderAll() {
 }
 
 /**
- * The scheme the page is drawn in now. A site may keep its choice in an attribute or a class,
- * but either way it ends up in the root color-scheme; "light dark" means the system decides.
+ * Схема, в которой страница нарисована сейчас. Сайт может хранить выбор в атрибуте или
+ * в классе, но так или иначе он попадает в `color-scheme` корня, а `light dark` значит,
+ * что решает система.
  * @returns {Scheme}
  */
 export function currentScheme() {
@@ -78,7 +79,7 @@ export function currentScheme() {
 }
 
 /**
- * The area of the part of a circle that falls on the screen: chords summed by pixel columns.
+ * Площадь той части круга, что попадает на экран: сумма хорд по столбцам пикселей.
  * @param {number} cx
  * @param {number} cy
  * @param {number} r
@@ -98,9 +99,9 @@ function visibleArea(cx, cy, r, width, height) {
 }
 
 /**
- * The radius at which a circle centered at (cx, cy) covers `share` of a width × height screen.
- * The button sits near an edge and most of the circle falls off it, so there is no formula:
- * the radius is found by bisection.
+ * Радиус, при котором круг с центром в (cx, cy) закрывает долю `share` экрана width × height.
+ * Кнопка стоит у края и большая часть круга уходит за экран, поэтому формулы нет,
+ * радиус ищется делением пополам.
  * @param {number} cx
  * @param {number} cy
  * @param {number} width
@@ -123,9 +124,9 @@ export function coverRadius(cx, cy, width, height, share = COVER) {
 }
 
 /**
- * cloneNode carries neither what was typed into the fields nor how far the containers are
- * scrolled; without this the copy would show an empty form and lists rolled back to the top.
- * Scroll positions only stick once the copy is in the document.
+ * `cloneNode` не переносит ни то, что введено в поля, ни прокрутку контейнеров, без этого
+ * копия показала бы пустую форму и списки, отмотанные к началу.
+ * Прокрутка применяется только когда копия уже в документе.
  * @param {Element} from
  * @param {Element} to
  */
@@ -147,10 +148,10 @@ function copyState(from, to) {
 }
 
 /**
- * Copies the page, leaving out the scripts and the copies of every peek, its own included,
- * and paints it in `scheme`.
- * color-scheme flips the light-dark() colors; the light/dark class is for sites that switch
- * their tokens by a class.
+ * Копирует страницу без скриптов и без копий всех кругов, включая собственную,
+ * и красит её в `scheme`.
+ * `color-scheme` переключает цвета из `light-dark()`, а класс `light`/`dark` нужен сайтам,
+ * которые переключают свои токены классом.
  * @param {HTMLElement} copy
  * @param {Scheme} scheme
  */
@@ -187,7 +188,7 @@ function onTransitionEnd(event) {
 	for (const { settle } of peeks.values()) settle(event)
 }
 
-/** The page listeners are shared by all the peeks: on while there is at least one. */
+/** Слушатели страницы общие для всех кругов: включены, пока есть хотя бы один. */
 function listen() {
 	addEventListener('pointermove', onMove, { passive: true })
 	addEventListener('scroll', schedule, { passive: true })
@@ -208,21 +209,21 @@ function unlisten() {
 }
 
 /**
- * Attaches the peek to a theme button. Works as a Svelte attachment as is:
- * `{@attach themePeek}`; returns the cleanup.
+ * Цепляет круг к кнопке темы. Как есть работает и как Svelte attachment:
+ * `{@attach themePeek}`. Возвращает функцию очистки.
  * @param {HTMLElement} anchor
- * @param {{ target?: (current: Scheme) => Scheme | undefined }} [options] `target` is the
- * scheme the circle shows, the opposite of the current one by default. When it matches the
- * current scheme there is nothing to show and the circle stays hidden.
+ * @param {{ target?: (current: Scheme) => Scheme | undefined }} [options] `target` -- схема,
+ * которую показывает круг, по умолчанию противоположная текущей. Если она совпадает
+ * с текущей, то показывать нечего и круг остаётся скрытым.
  * @returns {(() => void) | undefined}
  */
 export function themePeek(anchor, { target = (current) => (current === 'dark' ? 'light' : 'dark') } = {}) {
-	// Without a mouse there is nothing to approach with, and reduced motion asks for no circle.
+	// Без мыши приближаться нечем, а reduced motion просит обойтись без круга.
 	if (!matchMedia('(hover: hover)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
 	/** @type {HTMLElement | undefined} */
 	let peek
-	/** The open radius for the last center and viewport: it only changes on scroll and resize. */
+	/** Радиус раскрытого круга для последних центра и вьюпорта, меняется только при скролле и ресайзе. */
 	let open = { key: '', r: 0 }
 
 	const entry = { target, hovered: false, render, settle }
@@ -242,7 +243,7 @@ export function themePeek(anchor, { target = (current) => (current === 'dark' ? 
 	}
 
 	/**
-	 * Whether a button has anything to show: its scheme differs from the current one.
+	 * Есть ли кнопке что показать, то есть её схема отличается от текущей.
 	 * @param {View} view
 	 * @param {HTMLElement} button
 	 */
@@ -272,7 +273,7 @@ export function themePeek(anchor, { target = (current) => (current === 'dark' ? 
 
 		const closeness = Math.max(0, 1 - own / REACH)
 
-		// Squared: far away the circle barely grows, near the button it gains fast.
+		// В квадрате: издалека круг почти не растёт, а у кнопки набирает быстро.
 		return { r: NEAR * closeness ** 2, opacity: FAINT * closeness }
 	}
 
@@ -294,17 +295,17 @@ export function themePeek(anchor, { target = (current) => (current === 'dark' ? 
 			document.body.append(peek)
 		}
 
-		// A shrinking circle keeps its old copy; a fresh copy is taken only for a growing one.
+		// Сжимающийся круг остаётся со старой копией, свежая снимается только для растущего.
 		if (r && spot.scheme && peek.dataset.scheme !== spot.scheme) {
 			const first = !peek.dataset.scheme
 
 			fill(peek, spot.scheme)
 
-			// The first frame has a zero circle, otherwise the transition has nothing to grow from.
+			// Первый кадр с нулевым кругом, иначе transition не от чего расти.
 			if (first) peek.getBoundingClientRect()
 		}
 
-		// The copy scrolls with the page, so the center is in document coordinates.
+		// Копия скроллится вместе со страницей, поэтому центр в координатах документа.
 		peek.style.setProperty('--peek-x', `${spot.x + scrollX}px`)
 		peek.style.setProperty('--peek-y', `${spot.y + scrollY}px`)
 		peek.style.setProperty('--peek-r', `${r}px`)
@@ -336,7 +337,7 @@ export function themePeek(anchor, { target = (current) => (current === 'dark' ? 
 		schedule()
 	}
 
-	// The choice is made: the circle has done its job and goes out.
+	// Выбор сделан: круг своё отработал и гаснет.
 	function onClick() {
 		dismissed = true
 		schedule()

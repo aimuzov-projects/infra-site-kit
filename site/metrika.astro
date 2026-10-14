@@ -1,13 +1,13 @@
 ---
-// Yandex Metrika counter. Goes into <head>: it puts its own hash and the Yandex
-// sources into the page CSP, and Astro writes the CSP <meta> after the head
-// content, so from <body> it's too late. The no-JS pixel is metrika-pixel.astro.
+// Счётчик Яндекс Метрики. Ставится в <head>: он добавляет в CSP страницы свой хеш
+// и источники Яндекса, а Astro пишет CSP-<meta> после содержимого head,
+// то есть из <body> уже поздно. Пиксель для посетителей без JS -- metrika-pixel.astro.
 import { metrikaCsp, metrikaScript, scriptHash } from './metrika.js'
 
 type Props = {
-	/** Counter number from Yandex Metrika. */
+	/** Номер счётчика в Яндекс Метрике. */
 	id: number
-	/** ym init options on top of the defaults, e.g. `{ webvisor: true }`. */
+	/** Опции инициализации ym поверх значений по умолчанию, например `{ webvisor: true }`. */
 	init?: Record<string, unknown>
 }
 

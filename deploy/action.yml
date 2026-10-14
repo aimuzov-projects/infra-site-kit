@@ -24,10 +24,12 @@ inputs:
 runs:
   using: composite
   steps:
-    # The key in authorized_keys runs deploy/site.sh of infra-server for the site; the
-    # only thing ssh passes is the release tag, as the command. While the deploy waits in
-    # the queue of the server, the connection is silent: keepalives hold it and notice a
-    # dead one.
+    # Ключ в authorized_keys запускает для сайта deploy/site.sh из infra-server,
+    # единственное, что передаёт ssh, -- тег релиза в качестве команды.
+    # Пустой `REF` не передаём вовсе, тогда деплоится свежий main.
+    #
+    # Пока деплой ждёт в очереди сервера, соединение молчит,
+    # keepalive держат его и замечают, если оно умерло.
     - name: Deploy on server
       shell: bash
       env:

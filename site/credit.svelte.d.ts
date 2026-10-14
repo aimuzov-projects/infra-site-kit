@@ -1,14 +1,14 @@
 import type { Component } from 'svelte'
 
-// credit.svelte is plain JS, so svelte-check in a TypeScript site sees its import as `any`
-// and fails. This declaration gives it the props.
+// credit.svelte написан на чистом JS, поэтому svelte-check на TypeScript-сайте
+// видит его импорт как `any` и падает. Эта декларация даёт ему пропсы.
 declare const Credit: Component<{
-	/** The site source, shown as a link with the GitHub mark. */
+	/** Исходники сайта, показываются ссылкой со значком GitHub. */
 	repo?: string
-	/** Puts the copyright year first, on by default. */
+	/** Ставит год копирайта в начало, по умолчанию включено. */
 	copyright?: boolean
-	/** `spread` puts the source on the right edge of the container, `center` keeps both
-	 * parts in the middle. */
+	/** `spread` уводит исходники к правому краю контейнера, `center` держит обе части
+	 * по центру. */
 	align?: 'spread' | 'center'
 	class?: string
 }>

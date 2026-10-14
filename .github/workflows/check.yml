@@ -20,7 +20,8 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm test
-      # The browser is keyed by the Playwright version, its system libraries come from apt every run.
+      # Браузер кешируем по версии Playwright,
+      # а его системные библиотеки ставятся из apt каждый прогон.
       - id: playwright
         run: echo "version=$(npm ls @playwright/test --json | jq -r '.dependencies["@playwright/test"].version')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4

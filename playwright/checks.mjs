@@ -1,25 +1,28 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-// Checks every site shares: the pages of the sitemap, accessibility, the theme switch with its
-// peek and the lazy Yandex Metrika. siteChecks() registers them as tests; the functions also
-// work one by one inside a site's own tests.
+// Проверки, общие для всех сайтов: страницы из sitemap, доступность, переключатель темы
+// с подглядыванием и ленивая Яндекс Метрика. `siteChecks()` регистрирует их как тесты,
+// но каждую функцию можно звать и по отдельности внутри тестов самого сайта.
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** @typedef {import('@playwright/test').Locator} Locator */
 /** @typedef {import('@playwright/test').APIRequestContext} APIRequestContext */
 
-/** WCAG 2.1 A and AA, what axe can check automatically. */
+/** WCAG 2.1 уровней A и AA: то, что axe умеет проверить автоматически. */
 const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const METRIKA_TAG = /^https:\/\/mc\.yandex\.ru\/metrika\/tag\.js/
 
 const locs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(([, loc]) => loc)
 
 /**
- * Paths of the pages listed in the sitemap. Its URLs carry the production domain, so only the
- * path is kept and the page is asked from the server under test.
+ * Пути страниц, перечисленных в sitemap, отсортированные.
+ *
+ * В sitemap адреса записаны с продовым доменом, поэтому берём только путь
+ * и запрашиваем страницу у сервера, который тестируем.
+ *
  * @param {APIRequestContext} request
- * @param {string} [index] the sitemap index of @astrojs/sitemap
+ * @param {string} [index] Индекс sitemap от `@astrojs/sitemap`.
  * @returns {Promise<string[]>}
  */
 export async function sitemapPaths(request, index = '/sitemap-index.xml') {
@@ -43,11 +46,14 @@ export async function sitemapPaths(request, index = '/sitemap-index.xml') {
 }
 
 /**
- * Opens the page and checks that it answers 200 and logs no errors to the console: neither
- * an exception, nor a failed request, nor a CSP violation.
+ * Открывает страницу и проверяет, что она отвечает 200 и не пишет ошибок в консоль:
+ * ни исключений, ни упавших запросов, ни нарушений CSP.
+ *
+ * Проверки мягкие (`expect.soft`), то есть тест не обрывается на первой плохой странице.
+ *
  * @param {Page} page
  * @param {string} path
- * @param {{ ignore?: RegExp[] }} [options] console errors to let through
+ * @param {{ ignore?: RegExp[] }} [options] Ошибки консоли, которые пропускаем.
  */
 export async function expectHealthyPage(page, path, { ignore = [] } = {}) {
 	const errors = []
@@ -72,7 +78,10 @@ export async function expectHealthyPage(page, path, { ignore = [] } = {}) {
 }
 
 /**
- * Runs axe over the open page against WCAG 2.1 AA.
+ * Прогоняет axe по открытой странице на соответствие WCAG 2.1 AA.
+ *
+ * Страницу не открывает: перед вызовом нужен `page.goto()`.
+ *
  * @param {Page} page
  * @param {{ disableRules?: string[], exclude?: string[] }} [options]
  */
@@ -88,8 +97,11 @@ export async function expectAccessible(page, { disableRules = [], exclude = [] }
 }
 
 /**
- * The scheme the page is drawn in now, the same way theme-peek.js reads it: by the root
- * color-scheme, and by the system when that leaves the choice open.
+ * Схема, в которой страница нарисована сейчас.
+ *
+ * Читается так же, как в `theme-peek.js`: по `color-scheme` корня, а если он оставляет
+ * выбор открытым (`light dark` или пусто), то по системной настройке.
+ *
  * @param {Page} page
  * @returns {Promise<'light' | 'dark'>}
  */
@@ -108,9 +120,12 @@ export function pageScheme(page) {
 const nextFrame = (page) => page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())))
 
 /**
- * Clicks the theme button until the scheme changes and checks that it survives a reload.
- * A switch may go through "as in the system" first, which looks the same, so it gets up to
- * three clicks. The system is light.
+ * Жмёт кнопку темы, пока схема не сменится,
+ * и проверяет, что выбор переживает перезагрузку.
+ *
+ * Переключатель может сначала пройти через "как в системе", а это выглядит так же,
+ * поэтому даём ему до трёх кликов. Система эмулируется светлой.
+ *
  * @param {Page} page
  * @param {Locator} button
  * @param {{ path?: string, persist?: boolean }} [options]
@@ -124,6 +139,7 @@ export async function expectThemeToggle(page, button, { path = '/', persist = tr
 
 	for (let i = 0; i < 3 && scheme === start; i++) {
 		await button.click()
+		// Ждём кадр после клика: на глаз так приятнее, чем непрерывное мелькание инверсии.
 		await nextFrame(page)
 		scheme = await pageScheme(page)
 	}
@@ -137,8 +153,9 @@ export async function expectThemeToggle(page, button, { path = '/', persist = tr
 }
 
 /**
- * Hovers the theme button and checks the circle of theme-peek.js: it opens with a copy of the
- * page in the other scheme, hidden from assistive tech, and goes out on click.
+ * Наводит курсор на кнопку темы и проверяет круг из `theme-peek.js`: он раскрывается
+ * с копией страницы в другой схеме, скрыт от вспомогательных технологий и гаснет по клику.
+ *
  * @param {Page} page
  * @param {Locator} button
  * @param {{ path?: string }} [options]
@@ -160,10 +177,12 @@ export async function expectThemePeek(page, button, { path = '/' } = {}) {
 }
 
 /**
- * Checks that Yandex Metrika waits for the visitor: the page has the counter, but tag.js is
- * not requested until the first interaction, and right after it is. The page clock is faked,
- * so the 4 s fallback after load does not fire on a slow machine. Yandex itself is not
- * reached: its requests get an empty answer.
+ * Проверяет, что Яндекс Метрика ждёт посетителя: счётчик на странице есть, но `tag.js`
+ * не запрашивается до первого взаимодействия, а сразу после него запрашивается.
+ *
+ * Часы страницы подменены, чтобы запасной запуск через 4 с после `load` не сработал
+ * на медленной машине. До самого Яндекса запросы не доходят, им отвечаем пустотой.
+ *
  * @param {Page} page
  * @param {{ path?: string }} [options]
  */
@@ -183,6 +202,7 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
 
 	expect(await page.evaluate(() => typeof window.ym), `${path} has no Metrika counter`).toBe('function')
 
+	// Меньше 4 с, после которых `site/metrika.js` грузит `tag.js` и без взаимодействия.
 	await page.clock.runFor(3_000)
 	expect(loads, 'tag.js loaded before any interaction').toEqual([])
 
@@ -191,15 +211,16 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
 }
 
 /**
- * Registers the shared checks as tests of the current file.
+ * Регистрирует общие проверки как тесты текущего файла.
+ *
  * @param {object} [options]
- * @param {boolean} [options.pages] every sitemap page answers 200 without console errors
- * @param {RegExp[]} [options.ignoreConsole] console errors the pages may log
- * @param {false | { disableRules?: string[], exclude?: string[] }} [options.a11y] axe over
- * every sitemap page in both schemes, `false` turns it off
+ * @param {boolean} [options.pages] Каждая страница из sitemap отвечает 200 без ошибок в консоли.
+ * @param {RegExp[]} [options.ignoreConsole] Ошибки консоли, которые страницам можно писать.
+ * @param {false | { disableRules?: string[], exclude?: string[] }} [options.a11y] axe по каждой
+ * странице из sitemap в обеих схемах, `false` выключает проверку.
  * @param {{ button: (page: Page) => Locator, path?: string, persist?: boolean, peek?: boolean }} [options.theme]
- * the theme button; without it the theme is not checked
- * @param {boolean | { path?: string }} [options.metrika] the page with the Metrika counter
+ * Кнопка темы, без неё тема не проверяется.
+ * @param {boolean | { path?: string }} [options.metrika] Страница со счётчиком Метрики.
  */
 export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme, metrika } = {}) {
 	test.describe('site', () => {

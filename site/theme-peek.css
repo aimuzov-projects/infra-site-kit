@@ -1,6 +1,6 @@
-/* The circle of theme-peek.js. The site adds .theme-peek to its body rule for the layout. */
+/* Круг из theme-peek.js. Для раскладки сайт добавляет .theme-peek в своё правило для body. */
 
-/* Registered, otherwise a change of the radius or the pulse would jump instead of animating. */
+/* Зарегистрированы, иначе радиус и пульс менялись бы скачком, а не анимацией. */
 @property --peek-r {
 	syntax: '<length>';
 	inherits: false;
@@ -13,7 +13,7 @@
 	initial-value: 1;
 }
 
-/* Follows the pointer quickly, opens on hover with a bounce and breathes. */
+/* Быстро идёт за указателем, при наведении раскрывается с отскоком и дышит. */
 .theme-peek {
 	pointer-events: none;
 	position: absolute;
@@ -21,7 +21,7 @@
 	top: 0;
 	left: 0;
 	width: 100%;
-	/* At least the whole page: otherwise its background would not cover what shows through. */
+	/* Не меньше всей страницы, иначе её фон не закроет то, что просвечивает снизу. */
 	min-height: 100%;
 	clip-path: circle(calc(var(--peek-r) * var(--peek-pulse)) at var(--peek-x) var(--peek-y));
 	transition:
@@ -37,8 +37,8 @@
 }
 
 /*
- * The copy is a snapshot: entry animations would play again inside it, so every animation
- * jumps to its end and nothing transitions.
+ * Копия -- это снимок: анимации появления проигрались бы в ней заново, поэтому все анимации
+ * сразу прыгают в конец, а transition выключены.
  */
 .theme-peek * {
 	transition: none !important;

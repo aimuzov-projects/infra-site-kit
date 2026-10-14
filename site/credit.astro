@@ -1,11 +1,14 @@
 ---
-// The credit for static pages: the same markup plus a script that moves the year to the
-// visitor's clock. Svelte apps take credit.svelte directly.
+// Подпись для статических страниц: та же разметка плюс скрипт, который переводит год
+// на часы посетителя. Svelte-приложения берут credit.svelte напрямую.
 import Credit from './credit.svelte'
 
 type Props = {
+	/** Исходники сайта, показываются ссылкой со значком GitHub. */
 	repo?: string
+	/** Ставит год копирайта в начало, по умолчанию включено. */
 	copyright?: boolean
+	/** `spread` разносит части по краям контейнера, `center` держит обе по центру. */
 	align?: 'spread' | 'center'
 	class?: string
 }

@@ -7,7 +7,7 @@ import test from 'node:test'
 import prettier from 'prettier'
 import stylelint from 'stylelint'
 
-// test/site plays a site: it takes the configs by the package name, as the sites do.
+// `test/site` изображает сайт: берёт конфиги по имени пакета, как это делают сайты.
 const site = join(import.meta.dirname, 'site')
 
 const format = async (source, name) => {

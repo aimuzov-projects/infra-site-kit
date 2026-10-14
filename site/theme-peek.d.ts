@@ -1,19 +1,25 @@
+/** Цветовая схема страницы. */
 export type Scheme = 'light' | 'dark'
 
-/** The scheme the page is drawn in now, by the root color-scheme or the system. */
+/** Схема, в которой страница нарисована сейчас: по `color-scheme` корня или по системе. */
 export function currentScheme(): Scheme
 
-/** The radius at which a circle centered at (cx, cy) covers `share` of a width × height screen. */
+/**
+ * Радиус, при котором круг с центром в (cx, cy) закрывает долю `share` экрана width × height.
+ *
+ * @param share - Доля экрана, по умолчанию треть.
+ */
 export function coverRadius(cx: number, cy: number, width: number, height: number, share?: number): number
 
 /**
- * Attaches the peek to a theme button; works as a Svelte attachment as is. Returns the cleanup,
- * or nothing on touch screens and with reduced motion, where there is no peek.
+ * Цепляет круг к кнопке темы, как есть работает и как Svelte attachment.
+ *
+ * @returns Функцию очистки или ничего на тач-экранах и при reduced motion, где круга нет.
  */
 export function themePeek(
 	anchor: HTMLElement,
 	options?: {
-		/** The scheme the circle shows, the opposite of the current one by default. */
+		/** Схема, которую показывает круг, по умолчанию противоположная текущей. */
 		target?: (current: Scheme) => Scheme | undefined
 	},
 ): (() => void) | undefined

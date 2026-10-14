@@ -1,7 +1,7 @@
 name: Site release
 description: Keep the release PR of a site up to date with release-please and tell when merging it cut a release.
 
-# The calling job needs contents, pull-requests and actions write permissions.
+# Вызывающему job нужны права на запись в contents, pull-requests и actions.
 
 outputs:
   created:
@@ -20,9 +20,12 @@ runs:
         config-file: release-please-config.json
         manifest-file: .release-please-manifest.json
 
-    # The release PR comes from github-actions[bot], so GitHub holds its pull_request runs
-    # until someone approves them, and the PR stays blocked by its required check. The
-    # runs show up a few seconds after the PR changes; approve whatever appears in a minute.
+    # Release PR создаёт github-actions[bot], поэтому GitHub придерживает
+    # его прогоны pull_request до чьего-нибудь одобрения, а PR остаётся
+    # заблокирован обязательной проверкой.
+    #
+    # Прогоны появляются через несколько секунд после изменения PR,
+    # поэтому одобряем всё, что появится в течение минуты.
     - if: steps.release-please.outputs.pr
       shell: bash
       env:
