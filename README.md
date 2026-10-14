@@ -83,6 +83,25 @@ With a mouse only the face peeks out at first, and the line slides up from below
 
 `copyright={false}` drops the year when the site has its own © line. `--credit-hover` sets the link hover color; everything else is inherited from the footer.
 
+## Theme peek
+
+A theme button that shows what it switches to. The closer the pointer gets to the button, the wider a faint circle grows around it; on hover the circle opens to a third of the screen, and inside it the page is drawn in the other scheme. A click puts the circle out until the next hover. Touch screens and reduced motion get no circle.
+
+The circle holds a copy of the page painted in the other scheme: `color-scheme` on the copy flips the `light-dark()` colors, and the `light`/`dark` class is for a site that switches its tokens by a class. Such a site declares its light tokens on `:root, .light` as well, or the copy inside a dark page keeps the dark ones. The current scheme is read from the root `color-scheme`, so it does not matter whether the choice lives in an attribute or a class.
+
+```svelte
+<script>
+	import '@aimuzov-projects/infra-site-kit/theme-peek.css'
+	import { themePeek } from '@aimuzov-projects/infra-site-kit/theme-peek.js'
+</script>
+
+<button onclick={cycle} {@attach themePeek}>…</button>
+```
+
+The copy takes the place of `<body>`, so the site adds `.theme-peek` to its body rule for the layout and background: `body, .theme-peek { … }`.
+
+By default the circle shows the scheme opposite to the current one. A switch with a button per theme passes its own: `{@attach (node) => themePeek(node, { target: () => 'dark' })}`. When the target matches the current scheme there is nothing to show and the circle stays hidden.
+
 ## Renovate
 
 [`default.json`](default.json) is the Renovate preset of the sites: weekly grouped updates (Astro and Svelte, tooling, Node, GitHub Actions), a 3-day wait after a release, no automerge. A site turns it on with `renovate.json`:
