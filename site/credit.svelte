@@ -119,6 +119,91 @@
 		}
 	}
 
+	/* Phantom glitches across the whole width: torn strips of the text color
+	   flash for a few frames and jump sideways. Two layers on different periods,
+	   so the flashes never line up into a rhythm. */
+	.credit::before,
+	.credit::after {
+		pointer-events: none;
+		content: '';
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		background: linear-gradient(
+			90deg,
+			transparent 0 8%,
+			currentColor 8% 21%,
+			transparent 21% 34%,
+			currentColor 34% 37%,
+			transparent 37% 58%,
+			currentColor 58% 71%,
+			transparent 71% 86%,
+			currentColor 86% 90%,
+			transparent 90%
+		);
+		animation: glitch-a 7s steps(1) infinite;
+	}
+
+	.credit::after {
+		background-position: 37% 0;
+		background-size: 160% 100%;
+		animation: glitch-b 11s steps(1) 2.3s infinite;
+	}
+
+	@keyframes glitch-a {
+		0%,
+		90.5%,
+		100% {
+			opacity: 0;
+		}
+
+		91% {
+			transform: translateX(-6px);
+			opacity: 0.09;
+			clip-path: inset(22% 0 70% 0);
+		}
+
+		92% {
+			transform: translateX(5px);
+			opacity: 0.06;
+			clip-path: inset(61% 0 33% 0);
+		}
+
+		93% {
+			transform: translateX(-2px);
+			opacity: 0.1;
+			clip-path: inset(43% 0 52% 0);
+		}
+
+		94% {
+			opacity: 0;
+		}
+	}
+
+	@keyframes glitch-b {
+		0%,
+		47.5%,
+		100% {
+			opacity: 0;
+		}
+
+		48% {
+			transform: translateX(8px);
+			opacity: 0.07;
+			clip-path: inset(70% 0 24% 0);
+		}
+
+		48.6% {
+			transform: translateX(-4px);
+			opacity: 0.05;
+			clip-path: inset(12% 0 82% 0);
+		}
+
+		49.2% {
+			opacity: 0;
+		}
+	}
+
 	@keyframes wiggle {
 		0%,
 		86%,
@@ -191,7 +276,9 @@
 			transition: none;
 		}
 
-		.credit__icon--mark {
+		.credit__icon--mark,
+		.credit::before,
+		.credit::after {
 			animation: none;
 		}
 	}
