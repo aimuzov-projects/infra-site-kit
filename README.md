@@ -2,7 +2,7 @@
 
 [Русский](README.ru.md)
 
-Shared CI and linter configs for the aimuzov-projects sites built from [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). A fix to the checks, the deploy or the code style lands here once instead of in every site.
+Shared CI, linter and e2e configs for the aimuzov-projects sites built from [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). A fix to the checks, the deploy or the code style lands here once instead of in every site.
 
 ## Actions
 
@@ -148,6 +148,45 @@ import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 ```
 
 The site's `security.csp` keeps no Yandex sources: the component brings them only to pages that have it.
+
+## E2E tests
+
+The Playwright preset and the checks every site shares. Unit tests stay on `node --test`; Playwright is for what needs a real browser: the built pages, the CSP, the theme and the counter.
+
+`@playwright/test` stays in the site, so its binary and the browser are there; `@axe-core/playwright` comes with the kit.
+
+```bash
+npm install -D @playwright/test
+npx playwright install chromium
+```
+
+`playwright.config.ts`:
+
+```ts
+export { default } from '@aimuzov-projects/infra-site-kit/playwright'
+```
+
+The preset runs `e2e/` in Chromium against the production build: `astro build && astro preview` on port 4399 (`E2E_PORT` moves it), a fresh build every run. A site extends it with `defineConfig(preset, { … })`; a server of its own there, such as the API, is started next to the preview.
+
+`e2e/site.spec.ts`:
+
+```ts
+import { siteChecks } from '@aimuzov-projects/infra-site-kit/playwright/checks'
+
+siteChecks({
+	theme: { button: (page) => page.getByRole('button', { name: /^Тема:/ }) },
+	metrika: true,
+})
+```
+
+- Every page of `sitemap-index.xml` answers 200 and logs no errors to the console: exceptions, failed requests and CSP violations included. `ignoreConsole` lets known messages through.
+- axe checks every sitemap page against WCAG 2.1 AA in both schemes. `a11y: { disableRules, exclude }` narrows it, `a11y: false` turns it off.
+- With `theme`: clicking the button changes the root `color-scheme` and the choice survives a reload (`persist: false` when it should not), and hovering it opens the theme peek, which a click puts out (`peek: false` for a button without one).
+- With `metrika`: the page has the counter, but `tag.js` is not requested before the first interaction. Yandex itself is never reached.
+
+The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `sitemapPaths`) for a site's own tests.
+
+In CI the job of `.github/workflows/check.yml` runs them after the `check` action, with the browser cached by the Playwright version, see [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 
 ## Renovate
 

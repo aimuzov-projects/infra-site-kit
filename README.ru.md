@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-Общий CI и конфиги линтеров для сайтов aimuzov-projects, собранных из [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). Правка проверок, деплоя или стиля кода попадает сюда один раз, а не в каждый сайт.
+Общий CI, конфиги линтеров и e2e для сайтов aimuzov-projects, собранных из [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). Правка проверок, деплоя или стиля кода попадает сюда один раз, а не в каждый сайт.
 
 ## Actions
 
@@ -148,6 +148,45 @@ import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 ```
 
 В `security.csp` сайта источников Яндекса нет: компонент приносит их только на страницы, где он стоит.
+
+## E2E-тесты
+
+Пресет Playwright и проверки, общие для всех сайтов. Unit-тесты остаются на `node --test`, Playwright — для того, чему нужен настоящий браузер: собранных страниц, CSP, темы и счётчика.
+
+`@playwright/test` стоит в сайте, там же его бинарник и браузер; `@axe-core/playwright` приходит вместе с kit.
+
+```bash
+npm install -D @playwright/test
+npx playwright install chromium
+```
+
+`playwright.config.ts`:
+
+```ts
+export { default } from '@aimuzov-projects/infra-site-kit/playwright'
+```
+
+Пресет гоняет `e2e/` в Chromium против продовой сборки: `astro build && astro preview` на порту 4399 (`E2E_PORT` его меняет), каждый прогон собирает заново. Сайт расширяет его через `defineConfig(preset, { … })`; свой сервер там, например API, запускается рядом с preview.
+
+`e2e/site.spec.ts`:
+
+```ts
+import { siteChecks } from '@aimuzov-projects/infra-site-kit/playwright/checks'
+
+siteChecks({
+	theme: { button: (page) => page.getByRole('button', { name: /^Тема:/ }) },
+	metrika: true,
+})
+```
+
+- Каждая страница из `sitemap-index.xml` отвечает 200 и не пишет ошибок в консоль, включая исключения, упавшие запросы и нарушения CSP. `ignoreConsole` пропускает известные сообщения.
+- axe проверяет каждую страницу из sitemap по WCAG 2.1 AA в обеих схемах. `a11y: { disableRules, exclude }` сужает проверку, `a11y: false` выключает.
+- С `theme`: клик по кнопке меняет `color-scheme` корня, и выбор переживает перезагрузку (`persist: false`, если не должен), а наведение открывает круг с другой темой, который клик гасит (`peek: false` для кнопки без него).
+- С `metrika`: счётчик на странице есть, но `tag.js` не запрашивается до первого действия. До самого Яндекса запросы не доходят.
+
+Те же проверки экспортируются по отдельности (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `sitemapPaths`) для собственных тестов сайта.
+
+В CI их запускает job из `.github/workflows/check.yml` после action `check`, браузер кэшируется по версии Playwright, см. [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 
 ## Renovate
 
