@@ -14,6 +14,6 @@ export function themePeek(
 	anchor: HTMLElement,
 	options?: {
 		/** The scheme the circle shows, the opposite of the current one by default. */
-		target?: () => Scheme | undefined
+		target?: (current: Scheme) => Scheme | undefined
 	},
 ): (() => void) | undefined
