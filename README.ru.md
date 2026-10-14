@@ -50,7 +50,7 @@ jobs:
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.4.0
+npm install -D github:aimuzov-projects/infra-site-kit#v1.4.1
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
