@@ -7,7 +7,8 @@ Shared CI and linter configs for the aimuzov-projects sites built from [infra-si
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test` and the build. Packages from Ubuntu go in `apt-packages`.
-- [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer. The server address and its `known_hosts` line live here.
+- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) keeps the release PR up to date with the changelog from conventional commits; merging it cuts a tag and a GitHub release, the action then outputs `created` and `tag`. A PR opened with the Actions token starts no workflows, so the action runs `check.yml` on the release branch itself.
+- [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer. `ref` is the release tag to deploy, empty deploys the newest `main`. The server address and its `known_hosts` line live here.
 
 They are composite actions, not reusable workflows: the job stays in the site, so the required `check` status keeps its name, and a site adds its own steps before or after.
 
@@ -24,15 +25,37 @@ jobs:
       - uses: aimuzov-projects/infra-site-kit/check@v1
 ```
 
-`.github/workflows/deploy.yml`:
+`.github/workflows/check.yml` also needs `workflow_dispatch` among its triggers, for the check of the release PR.
+
+`.github/workflows/deploy.yml`, a deploy by release:
 
 ```yaml
 jobs:
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    outputs:
+      created: ${{ steps.release.outputs.created }}
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - id: release
+        uses: aimuzov-projects/infra-site-kit/release@v1
+
   check:
+    needs: release
+    if: needs.release.outputs.created == 'true'
     uses: ./.github/workflows/check.yml
 
   deploy:
-    needs: check
+    needs: [release, check]
+    if: >-
+      always() && vars.DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || needs.check.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -42,8 +65,11 @@ jobs:
       - uses: aimuzov-projects/infra-site-kit/deploy@v1
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
-          url: https://example.com
+          url: https://example.com/
+          ref: ${{ needs.release.outputs.tag || inputs.tag }}
 ```
+
+release-please reads `release-please-config.json` (`"release-type": "node"`, `"packages": { ".": {} }`) and `.release-please-manifest.json` with the current version (`{ ".": "1.0.0" }`). The repo needs "Allow GitHub Actions to create and approve pull requests" in its Actions settings.
 
 ## Configs
 
@@ -127,7 +153,7 @@ The site's `security.csp` keeps no Yandex sources: the component brings them onl
 
 ## Renovate
 
-[`default.json`](default.json) is the Renovate preset of the sites: weekly grouped updates (Astro and Svelte, tooling, Node, GitHub Actions), a 3-day wait after a release, no automerge. A site turns it on with `renovate.json`:
+[`default.json`](default.json) is the Renovate preset of the sites: weekly grouped updates (Astro and Svelte, tooling, Node, GitHub Actions), a 3-day wait after a release. A merge into `main` doesn't deploy, a release does, so non-major updates merge themselves once the checks pass, and what ends up in production (`dependencies`, base images, Node) is committed as `fix(deps)`, which makes release-please cut a release for it. A site turns it on with `renovate.json`:
 
 ```json
 { "extends": ["github>aimuzov-projects/infra-site-kit"] }

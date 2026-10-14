@@ -8,6 +8,10 @@ inputs:
   url:
     description: Site address to check after the deploy, e.g. https://example.com.
     required: true
+  ref:
+    description: Release tag to deploy, e.g. v1.2.0. Empty deploys the newest main.
+    required: false
+    default: ''
   host:
     description: Projects server.
     required: false
@@ -20,22 +24,24 @@ inputs:
 runs:
   using: composite
   steps:
-    # The server knows what to do: the key in authorized_keys runs deploy/site.sh of
-    # infra-server for the site, so we don't pass a command to ssh. While the deploy waits in the queue
-    # of the server, the connection is silent: keepalives hold it and notice a dead one.
+    # The key in authorized_keys runs deploy/site.sh of infra-server for the site; the
+    # only thing ssh passes is the release tag, as the command. While the deploy waits in
+    # the queue of the server, the connection is silent: keepalives hold it and notice a
+    # dead one.
     - name: Deploy on server
       shell: bash
       env:
         SSH_KEY: ${{ inputs.ssh-key }}
         KNOWN_HOST: ${{ inputs.known-host }}
         HOST: ${{ inputs.host }}
+        REF: ${{ inputs.ref }}
       run: |
         install -m 700 -d ~/.ssh
         printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
         chmod 600 ~/.ssh/deploy
         printf '%s\n' "$KNOWN_HOST" > ~/.ssh/known_hosts
         ssh -i ~/.ssh/deploy -o IdentitiesOnly=yes -o BatchMode=yes \
-          -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "root@$HOST"
+          -o ServerAliveInterval=30 -o ServerAliveCountMax=10 "root@$HOST" ${REF:+"$REF"}
 
     - name: Check site
       shell: bash
