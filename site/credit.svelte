@@ -17,7 +17,7 @@
 <span class={['credit', className]}>
 	<span class="credit__group">
 		{#if copyright}
-			<span>© <span data-year>{year}</span></span>
+			<span><span data-year>{year}</span> ©</span>
 		{/if}
 		Сделано
 		<a class="credit__link" href="https://github.com/aimuzov" target="_blank" rel="noopener">
