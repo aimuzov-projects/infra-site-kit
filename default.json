@@ -1,15 +1,26 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"description": "Renovate preset for the aimuzov-projects sites: weekly grouped updates, no automerge",
+	"description": "Renovate preset for the aimuzov-projects sites: weekly grouped updates, non-major ones merge themselves",
 	"extends": ["config:recommended", ":semanticCommits", ":semanticCommitTypeAll(build)", "schedule:weekly"],
 	"timezone": "Europe/Moscow",
 	"minimumReleaseAge": "3 days",
 	"prConcurrentLimit": 5,
 	"packageRules": [
 		{
+			"description": "What ends up in production gets fix(deps): release-please cuts a release for it, while build(deps) waits for the next one",
+			"matchDepTypes": ["dependencies"],
+			"semanticCommitType": "fix"
+		},
+		{
+			"description": "Base images of the containers end up in production too",
+			"matchManagers": ["dockerfile", "docker-compose"],
+			"semanticCommitType": "fix"
+		},
+		{
 			"description": "Astro, Svelte and their integrations move together",
 			"groupName": "astro and svelte",
-			"matchPackageNames": ["astro", "@astrojs/**", "svelte", "svelte-check"]
+			"matchPackageNames": ["astro", "@astrojs/**", "svelte", "svelte-check"],
+			"semanticCommitType": "fix"
 		},
 		{
 			"description": "Format, lint and type check tools",
@@ -19,7 +30,8 @@
 		{
 			"description": "One Node version in engines, mise.toml and the Dockerfiles",
 			"groupName": "node",
-			"matchDepNames": ["node"]
+			"matchDepNames": ["node"],
+			"semanticCommitType": "fix"
 		},
 		{
 			"description": "Shared CI and configs: released by hand, so no age wait",
@@ -30,6 +42,12 @@
 			"description": "GitHub Actions in one PR",
 			"groupName": "github actions",
 			"matchManagers": ["github-actions"]
+		},
+		{
+			"description": "A merge into main doesn't deploy, a release does, so non-major updates merge themselves once the checks pass. Renovate merges by itself, without the repo's auto-merge setting",
+			"matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+			"automerge": true,
+			"platformAutomerge": false
 		}
 	]
 }

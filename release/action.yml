@@ -1,0 +1,31 @@
+name: Site release
+description: Keep the release PR of a site up to date with release-please and tell when merging it cut a release.
+
+# The calling job needs contents, pull-requests and actions write permissions.
+
+outputs:
+  created:
+    description: '"true" when this push cut a release.'
+    value: ${{ steps.release-please.outputs.release_created }}
+  tag:
+    description: Tag of the release cut by this push, e.g. v1.2.0.
+    value: ${{ steps.release-please.outputs.tag_name }}
+
+runs:
+  using: composite
+  steps:
+    - id: release-please
+      uses: googleapis/release-please-action@v5.0.0
+      with:
+        config-file: release-please-config.json
+        manifest-file: .release-please-manifest.json
+
+    # A PR opened or updated with the Actions token doesn't start other workflows, so the
+    # release PR would never get its required check. A workflow_dispatch run is allowed to
+    # start, and its check lands on the head of the release branch.
+    - if: steps.release-please.outputs.pr
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR: ${{ steps.release-please.outputs.pr }}
+      run: gh workflow run check.yml --repo "$GITHUB_REPOSITORY" --ref "$(jq -r .headBranchName <<< "$PR")"

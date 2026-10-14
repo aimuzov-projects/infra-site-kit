@@ -7,7 +7,8 @@
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test` и сборка. Пакеты из Ubuntu передаются в `apt-packages`.
-- [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`. Адрес сервера и его строка `known_hosts` живут здесь.
+- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) держит релизный PR с changelog из conventional-коммитов; мерж этого PR создаёт тег и GitHub Release, а action отдаёт `created` и `tag`. PR, открытый токеном Actions, не запускает workflow, поэтому action сам запускает `check.yml` на релизной ветке.
+- [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`. `ref` — тег релиза для выкладки, пустой выкладывает свежий `main`. Адрес сервера и его строка `known_hosts` живут здесь.
 
 Это composite actions, а не reusable workflows: job остаётся в сайте, поэтому обязательный статус `check` не меняет имя, а сайт добавляет свои шаги до или после.
 
@@ -24,15 +25,37 @@ jobs:
       - uses: aimuzov-projects/infra-site-kit/check@v1
 ```
 
-`.github/workflows/deploy.yml`:
+В триггерах `.github/workflows/check.yml` нужен ещё `workflow_dispatch` — для проверки релизного PR.
+
+`.github/workflows/deploy.yml`, выкладка по релизу:
 
 ```yaml
 jobs:
+  release:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    outputs:
+      created: ${{ steps.release.outputs.created }}
+      tag: ${{ steps.release.outputs.tag }}
+    steps:
+      - id: release
+        uses: aimuzov-projects/infra-site-kit/release@v1
+
   check:
+    needs: release
+    if: needs.release.outputs.created == 'true'
     uses: ./.github/workflows/check.yml
 
   deploy:
-    needs: check
+    needs: [release, check]
+    if: >-
+      always() && vars.DEPLOY_ENABLED == 'true' &&
+      (github.event_name == 'workflow_dispatch' || needs.check.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -42,8 +65,11 @@ jobs:
       - uses: aimuzov-projects/infra-site-kit/deploy@v1
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
-          url: https://example.com
+          url: https://example.com/
+          ref: ${{ needs.release.outputs.tag || inputs.tag }}
 ```
+
+release-please читает `release-please-config.json` (`"release-type": "node"`, `"packages": { ".": {} }`) и `.release-please-manifest.json` с текущей версией (`{ ".": "1.0.0" }`). В настройках Actions репо должна стоять галочка «Allow GitHub Actions to create and approve pull requests».
 
 ## Конфиги
 
@@ -127,7 +153,7 @@ import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 
 ## Renovate
 
-[`default.json`](default.json) — пресет Renovate для сайтов: обновления раз в неделю группами (Astro и Svelte, инструменты, Node, GitHub Actions), 3 дня выдержки после релиза, без автомержа. Сайт включает его файлом `renovate.json`:
+[`default.json`](default.json) — пресет Renovate для сайтов: обновления раз в неделю группами (Astro и Svelte, инструменты, Node, GitHub Actions), 3 дня выдержки после релиза. Мерж в `main` не выкладывает, выкладывает релиз, поэтому обновления, кроме мажорных, мержатся сами после зелёных проверок, а то, что попадает на прод (`dependencies`, базовые образы, Node), коммитится как `fix(deps)` — для него release-please сделает релиз. Сайт включает его файлом `renovate.json`:
 
 ```json
 { "extends": ["github>aimuzov-projects/infra-site-kit"] }
