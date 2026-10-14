@@ -17,6 +17,29 @@ const FAINT = 0.35
 const COVER = 0.33
 
 /**
+ * Peeks on the page. A switch with a button per theme has several of them side by side: the
+ * circle belongs only to the button nearest the pointer, so they don't stack.
+ * @type {Map<HTMLElement, { update: () => void, live: () => boolean }>}
+ */
+const peeks = new Map()
+/** After a click every circle is out until the pointer comes onto one of the buttons again. */
+let dismissed = false
+
+/**
+ * @param {HTMLElement} anchor
+ * @param {{ x: number, y: number }} pointer
+ */
+function distance(anchor, pointer) {
+	const rect = anchor.getBoundingClientRect()
+
+	return Math.hypot(pointer.x - rect.left - rect.width / 2, pointer.y - rect.top - rect.height / 2)
+}
+
+function updateAll() {
+	for (const { update } of peeks.values()) update()
+}
+
+/**
  * The scheme the page is drawn in now. A site may keep its choice in an attribute or a class,
  * but either way it ends up in the root color-scheme; "light dark" means the system decides.
  * @returns {Scheme}
@@ -77,46 +100,49 @@ export function coverRadius(cx, cy, width, height, share = COVER) {
 }
 
 /**
- * cloneNode does not carry what was typed into the fields; without this the copy would show
- * an empty form.
- * @param {HTMLElement} from
- * @param {HTMLElement} to
+ * cloneNode carries neither what was typed into the fields nor how far the containers are
+ * scrolled; without this the copy would show an empty form and lists rolled back to the top.
+ * Scroll positions only stick once the copy is in the document.
+ * @param {Element} from
+ * @param {Element} to
  */
-function copyFields(from, to) {
-	const source = from.querySelectorAll('input, textarea, select')
-	const target = to.querySelectorAll('input, textarea, select')
+function copyState(from, to) {
+	const source = from.querySelectorAll('*')
+	const target = to.querySelectorAll('*')
 
-	source.forEach((field, i) => {
+	source.forEach((node, i) => {
 		const twin = target[i]
 
 		if (!twin) return
 
-		twin.value = field.value
+		if (node.scrollTop || node.scrollLeft) twin.scrollTo(node.scrollLeft, node.scrollTop)
 
-		if (field instanceof HTMLInputElement && twin instanceof HTMLInputElement) twin.checked = field.checked
+		if (node instanceof HTMLInputElement && twin instanceof HTMLInputElement) twin.checked = node.checked
+
+		if ('value' in node && 'value' in twin && node.matches('input, textarea, select')) twin.value = node.value
 	})
 }
 
 /**
- * Copies the page, leaving out the copy itself and the scripts, and paints it in `scheme`.
+ * Copies the page, leaving out the scripts and the copies of every peek, its own included,
+ * and paints it in `scheme`.
  * color-scheme flips the light-dark() colors; the light/dark class is for sites that switch
  * their tokens by a class.
  * @param {HTMLElement} copy
  * @param {Scheme} scheme
  */
 function fill(copy, scheme) {
-	const page = document.createElement('div')
+	const pairs = [...document.body.children]
+		.filter((child) => !child.classList.contains('theme-peek') && child.tagName !== 'SCRIPT')
+		.map((child) => [child, /** @type {Element} */ (child.cloneNode(true))])
 
-	for (const child of document.body.children) {
-		if (child !== copy && child.tagName !== 'SCRIPT') page.append(child.cloneNode(true))
-	}
-
-	copyFields(document.body, page)
-	copy.replaceChildren(...page.childNodes)
+	copy.replaceChildren(...pairs.map(([, twin]) => twin))
 	copy.style.colorScheme = scheme
 	copy.classList.toggle('light', scheme === 'light')
 	copy.classList.toggle('dark', scheme === 'dark')
 	copy.dataset.scheme = scheme
+
+	for (const [node, twin] of pairs) copyState(node, twin)
 }
 
 /**
@@ -137,25 +163,35 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 	/** @type {{ x: number, y: number } | undefined} */
 	let pointer
 	let hovered = false
-	/** After a click the circle is out until the pointer comes onto the button again. */
-	let dismissed = false
 
 	/**
 	 * @param {number} cx
 	 * @param {number} cy
-	 * @param {Scheme | undefined} scheme
 	 */
-	function shape(cx, cy, scheme) {
-		if (dismissed || !scheme || scheme === currentScheme()) return { r: 0, opacity: 0 }
+	function shape(cx, cy) {
+		if (dismissed || !live()) return { r: 0, opacity: 0 }
 
 		if (hovered) return { r: coverRadius(cx, cy, document.documentElement.clientWidth, innerHeight), opacity: 1 }
 
 		if (!pointer) return { r: 0, opacity: 0 }
 
-		const closeness = Math.max(0, 1 - Math.hypot(pointer.x - cx, pointer.y - cy) / REACH)
+		const own = Math.hypot(pointer.x - cx, pointer.y - cy)
+
+		for (const [other, { live: otherLive }] of peeks) {
+			if (other !== anchor && otherLive() && distance(other, pointer) < own) return { r: 0, opacity: 0 }
+		}
+
+		const closeness = Math.max(0, 1 - own / REACH)
 
 		// Squared: far away the circle barely grows, near the button it gains fast.
 		return { r: NEAR * closeness ** 2, opacity: FAINT * closeness }
+	}
+
+	/** Whether the button has anything to show: its scheme differs from the current one. */
+	function live() {
+		const scheme = target()
+
+		return Boolean(scheme) && scheme !== currentScheme()
 	}
 
 	function update() {
@@ -163,7 +199,7 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 		const cx = rect.left + rect.width / 2
 		const cy = rect.top + rect.height / 2
 		const scheme = target()
-		const { r, opacity } = shape(cx, cy, scheme)
+		const { r, opacity } = shape(cx, cy)
 
 		if (!r && !peek) return
 
@@ -221,7 +257,7 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 	function onEnter() {
 		hovered = true
 		dismissed = false
-		update()
+		updateAll()
 	}
 
 	function onLeave() {
@@ -232,9 +268,10 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 	// The choice is made: the circle has done its job and goes out.
 	function onClick() {
 		dismissed = true
-		update()
+		updateAll()
 	}
 
+	peeks.set(anchor, { update, live })
 	addEventListener('pointermove', onMove, { passive: true })
 	addEventListener('scroll', update, { passive: true })
 	addEventListener('resize', update)
@@ -245,6 +282,7 @@ export function themePeek(anchor, { target = () => (currentScheme() === 'dark' ?
 	anchor.addEventListener('click', onClick)
 
 	return () => {
+		peeks.delete(anchor)
 		removeEventListener('pointermove', onMove)
 		removeEventListener('scroll', update)
 		removeEventListener('resize', update)

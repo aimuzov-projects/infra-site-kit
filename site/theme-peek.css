@@ -21,6 +21,8 @@
 	top: 0;
 	left: 0;
 	width: 100%;
+	/* At least the whole page: otherwise its background would not cover what shows through. */
+	min-height: 100%;
 	clip-path: circle(calc(var(--peek-r) * var(--peek-pulse)) at var(--peek-x) var(--peek-y));
 	transition:
 		--peek-r 0.2s ease-out,
@@ -32,6 +34,17 @@
 			opacity 0.3s ease-out;
 		animation: theme-peek-pulse 1.4s ease-in-out 0.6s infinite alternate;
 	}
+}
+
+/*
+ * The copy is a snapshot: entry animations would play again inside it, so every animation
+ * jumps to its end and nothing transitions.
+ */
+.theme-peek * {
+	transition: none !important;
+	animation-duration: 0s !important;
+	animation-delay: 0s !important;
+	animation-iteration-count: 1 !important;
 }
 
 @keyframes theme-peek-pulse {
