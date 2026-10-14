@@ -139,6 +139,7 @@ export async function expectThemeToggle(page, button, { path = '/', persist = tr
 
 	for (let i = 0; i < 3 && scheme === start; i++) {
 		await button.click()
+		// Ждём кадр после клика: на глаз так приятнее, чем непрерывное мелькание инверсии.
 		await nextFrame(page)
 		scheme = await pageScheme(page)
 	}
