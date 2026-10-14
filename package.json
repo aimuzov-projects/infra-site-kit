@@ -1,8 +1,8 @@
 {
 	"name": "@aimuzov-projects/infra-site-kit",
-	"version": "1.4.2",
+	"version": "1.5.0",
 	"private": true,
-	"description": "Shared Prettier, Stylelint and oxlint configs and the author credit for the aimuzov-projects sites",
+	"description": "Shared Prettier, Stylelint and oxlint configs, the author credit and the theme peek for the aimuzov-projects sites",
 	"license": "MIT",
 	"repository": "github:aimuzov-projects/infra-site-kit",
 	"type": "module",
@@ -16,7 +16,12 @@
 			"svelte": "./site/credit.svelte",
 			"default": "./site/credit.svelte"
 		},
-		"./year.js": "./site/year.js"
+		"./year.js": "./site/year.js",
+		"./theme-peek.js": {
+			"types": "./site/theme-peek.d.ts",
+			"default": "./site/theme-peek.js"
+		},
+		"./theme-peek.css": "./site/theme-peek.css"
 	},
 	"files": [
 		"prettier.mjs",
