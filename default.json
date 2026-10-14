@@ -1,0 +1,35 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"description": "Renovate preset for the aimuzov-projects sites: weekly grouped updates, no automerge",
+	"extends": ["config:recommended", ":semanticCommits", ":semanticCommitTypeAll(build)", "schedule:weekly"],
+	"timezone": "Europe/Moscow",
+	"minimumReleaseAge": "3 days",
+	"prConcurrentLimit": 5,
+	"packageRules": [
+		{
+			"description": "Astro, Svelte and their integrations move together",
+			"groupName": "astro and svelte",
+			"matchPackageNames": ["astro", "@astrojs/**", "svelte", "svelte-check"]
+		},
+		{
+			"description": "Format, lint and type check tools",
+			"groupName": "tooling",
+			"matchPackageNames": ["prettier", "stylelint", "oxlint", "typescript", "@types/node"]
+		},
+		{
+			"description": "One Node version in engines, mise.toml and the Dockerfiles",
+			"groupName": "node",
+			"matchDepNames": ["node"]
+		},
+		{
+			"description": "Shared CI and configs: released by hand, so no age wait",
+			"matchPackageNames": ["@aimuzov-projects/infra-site-kit", "aimuzov-projects/infra-site-kit"],
+			"minimumReleaseAge": null
+		},
+		{
+			"description": "GitHub Actions in one PR",
+			"groupName": "github actions",
+			"matchManagers": ["github-actions"]
+		}
+	]
+}
