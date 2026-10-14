@@ -59,6 +59,14 @@ npm install -D github:aimuzov-projects/infra-site-kit#v1.1.0
 
 npm забирает пакет архивом с GitHub, так что git в образе сборки не нужен.
 
+## Renovate
+
+[`default.json`](default.json) — пресет Renovate для сайтов: обновления раз в неделю группами (Astro и Svelte, инструменты, Node, GitHub Actions), 3 дня выдержки после релиза, без автомержа. Сайт включает его файлом `renovate.json`:
+
+```json
+{ "extends": ["github>aimuzov-projects/infra-site-kit"] }
+```
+
 ## Версии
 
 Actions сайты берут по мажорному тегу `v1`, пакет — по точному тегу вроде `v1.1.0`. Совместимая правка получает тег `v1.x.y` и переносит на него `v1`, ломающая начинает `v2`.
