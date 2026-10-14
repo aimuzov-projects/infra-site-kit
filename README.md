@@ -1,8 +1,8 @@
-# site-kit
+# infra-site-kit
 
 [Русский](README.ru.md)
 
-Shared CI for the aimuzov-projects sites built from [infra-template-site](https://github.com/aimuzov-projects/infra-template-site). A fix to the checks or the deploy lands here once instead of in every site.
+Shared CI for the aimuzov-projects sites built from [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). A fix to the checks or the deploy lands here once instead of in every site.
 
 ## Actions
 
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov-projects/site-kit/check@v1
+      - uses: aimuzov-projects/infra-site-kit/check@v1
 ```
 
 `.github/workflows/deploy.yml`:
@@ -39,7 +39,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov-projects/site-kit/deploy@v1
+      - uses: aimuzov-projects/infra-site-kit/deploy@v1
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com
