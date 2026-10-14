@@ -70,7 +70,6 @@ const routes = {
 		'application/xml',
 		sitemap('urlset', [`<url><loc>${domain}/</loc></url>`, `<url><loc>${domain}/about/</loc></url>`]),
 	],
-	'/favicon.ico': ['image/x-icon', ''],
 }
 
 const types = { '.js': 'text/javascript', '.css': 'text/css' }
