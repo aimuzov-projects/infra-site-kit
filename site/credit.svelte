@@ -114,93 +114,73 @@
 			/* The face sits still and wiggles its mustache once every five seconds. */
 			&--mark {
 				transform-origin: 50% 70%;
-				animation: wiggle 5s ease-in-out infinite;
 			}
 		}
 	}
 
-	/* Phantom glitches across the whole width: torn strips of the text color
-	   flash for a few frames and jump sideways. Two layers on different periods,
-	   so the flashes never line up into a rhythm. */
-	.credit::before,
-	.credit::after {
-		pointer-events: none;
-		content: '';
-		position: absolute;
-		inset: 0;
-		opacity: 0;
-		background: linear-gradient(
-			90deg,
-			transparent 0 8%,
-			currentColor 8% 21%,
-			transparent 21% 34%,
-			currentColor 34% 37%,
-			transparent 37% 58%,
-			currentColor 58% 71%,
-			transparent 71% 86%,
-			currentColor 86% 90%,
-			transparent 90%
-		);
-		animation: glitch-a 7s steps(1) infinite;
+	/* Every eight seconds the credit glitches for a few frames: the text loses
+	   the signal and flickers, the icons split into red and cyan copies at the
+	   same moment. Filters only, so the peek opacity and the wiggle transform
+	   stay untouched. */
+	.credit__line {
+		animation: signal 8s steps(1) infinite;
 	}
 
-	.credit::after {
-		background-position: 37% 0;
-		background-size: 160% 100%;
-		animation: glitch-b 11s steps(1) 2.3s infinite;
+	.credit__icon {
+		animation: rgb-split 8s steps(1) infinite;
 	}
 
-	@keyframes glitch-a {
+	.credit__icon--mark {
+		animation:
+			wiggle 5s ease-in-out infinite,
+			rgb-split 8s steps(1) infinite;
+	}
+
+	@keyframes signal {
 		0%,
-		90.5%,
+		88%,
 		100% {
-			opacity: 0;
+			filter: none;
+		}
+
+		89% {
+			filter: opacity(0.35);
+		}
+
+		90% {
+			filter: blur(0.4px);
 		}
 
 		91% {
-			transform: translateX(-6px);
-			opacity: 0.09;
-			clip-path: inset(22% 0 70% 0);
+			filter: opacity(0.6);
 		}
 
 		92% {
-			transform: translateX(5px);
-			opacity: 0.06;
-			clip-path: inset(61% 0 33% 0);
-		}
-
-		93% {
-			transform: translateX(-2px);
-			opacity: 0.1;
-			clip-path: inset(43% 0 52% 0);
-		}
-
-		94% {
-			opacity: 0;
+			filter: none;
 		}
 	}
 
-	@keyframes glitch-b {
+	@keyframes rgb-split {
 		0%,
-		47.5%,
+		88%,
 		100% {
-			opacity: 0;
+			filter: none;
 		}
 
-		48% {
-			transform: translateX(8px);
-			opacity: 0.07;
-			clip-path: inset(70% 0 24% 0);
+		89% {
+			filter: drop-shadow(-0.12em 0 rgb(255 0 90 / 70%)) drop-shadow(0.12em 0 rgb(0 210 255 / 70%));
 		}
 
-		48.6% {
-			transform: translateX(-4px);
-			opacity: 0.05;
-			clip-path: inset(12% 0 82% 0);
+		90.5% {
+			filter: drop-shadow(0.12em 0 rgb(255 0 90 / 70%)) drop-shadow(-0.12em 0 rgb(0 210 255 / 70%));
 		}
 
-		49.2% {
-			opacity: 0;
+		92% {
+			filter: drop-shadow(-0.06em 0 rgb(255 0 90 / 50%)) drop-shadow(0.06em 0 rgb(0 210 255 / 50%));
+		}
+
+		93% {
+			filter: none;
 		}
 	}
 
@@ -276,9 +256,9 @@
 			transition: none;
 		}
 
-		.credit__icon--mark,
-		.credit::before,
-		.credit::after {
+		.credit__line,
+		.credit__icon,
+		.credit__icon--mark {
 			animation: none;
 		}
 	}
