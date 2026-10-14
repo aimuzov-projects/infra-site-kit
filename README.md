@@ -2,7 +2,7 @@
 
 [Русский](README.ru.md)
 
-Shared CI for the aimuzov-projects sites built from [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). A fix to the checks or the deploy lands here once instead of in every site.
+Shared CI and linter configs for the aimuzov-projects sites built from [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). A fix to the checks, the deploy or the code style lands here once instead of in every site.
 
 ## Actions
 
@@ -45,9 +45,23 @@ jobs:
           url: https://example.com
 ```
 
+## Configs
+
+The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
+
+```bash
+npm install -D github:aimuzov-projects/infra-site-kit#v1.1.0
+```
+
+- `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
+- `stylelint.config.mjs`: `export default { extends: ['@aimuzov-projects/infra-site-kit/stylelint'] }`, the site's own `overrides` go next to `extends`
+- `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov-projects/infra-site-kit/oxlint.json"] }`
+
+npm takes the package as a tarball from GitHub, so the build image needs no git.
+
 ## Versions
 
-Sites pin the major tag `v1`. A compatible change gets a `v1.x.y` tag and moves `v1` to it; a breaking one starts `v2`.
+Sites pin the actions to the major tag `v1` and the package to an exact tag such as `v1.1.0`. A compatible change gets a `v1.x.y` tag and moves `v1` to it; a breaking one starts `v2`.
 
 ```bash
 git tag v1.0.1 && git tag -f v1 && git push origin v1.0.1 && git push -f origin v1

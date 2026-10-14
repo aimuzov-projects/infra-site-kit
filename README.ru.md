@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-Общий CI для сайтов aimuzov-projects, собранных из [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). Правка проверок или деплоя попадает сюда один раз, а не в каждый сайт.
+Общий CI и конфиги линтеров для сайтов aimuzov-projects, собранных из [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). Правка проверок, деплоя или стиля кода попадает сюда один раз, а не в каждый сайт.
 
 ## Actions
 
@@ -45,9 +45,23 @@ jobs:
           url: https://example.com
 ```
 
+## Конфиги
+
+Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
+
+```bash
+npm install -D github:aimuzov-projects/infra-site-kit#v1.1.0
+```
+
+- `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
+- `stylelint.config.mjs`: `export default { extends: ['@aimuzov-projects/infra-site-kit/stylelint'] }`, свои `overrides` сайта — рядом с `extends`
+- `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov-projects/infra-site-kit/oxlint.json"] }`
+
+npm забирает пакет архивом с GitHub, так что git в образе сборки не нужен.
+
 ## Версии
 
-Сайты ссылаются на мажорный тег `v1`. Совместимая правка получает тег `v1.x.y` и переносит на него `v1`, ломающая начинает `v2`.
+Actions сайты берут по мажорному тегу `v1`, пакет — по точному тегу вроде `v1.1.0`. Совместимая правка получает тег `v1.x.y` и переносит на него `v1`, ломающая начинает `v2`.
 
 ```bash
 git tag v1.0.1 && git tag -f v1 && git push origin v1.0.1 && git push -f origin v1
