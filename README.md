@@ -102,6 +102,29 @@ The copy takes the place of `<body>`, so the site adds `.theme-peek` to its body
 
 By default the circle shows the scheme opposite to the current one. A switch with a button per theme passes its own: `{@attach (node) => themePeek(node, { target: () => 'dark' })}`. When the target matches the current scheme there is nothing to show and the circle stays hidden. Of several buttons side by side, only the one nearest the pointer draws the circle, and a click on any of them puts it out for all.
 
+## Yandex Metrika
+
+The counter loads `tag.js` on the first interaction or 4 s after `load`, so the ~85 KB script doesn't steal bandwidth from fonts and the first photo; earlier `ym` calls wait in a queue. Webvisor is off: on mobile it raises LCP.
+
+- `metrika.astro` goes into `<head>`. It renders the snippet inline and puts its hash, `mc.yandex.ru` and `yastatic.net` into the page CSP through `Astro.csp`, merged with the site's directives. From `<body>` it would be too late: Astro writes the CSP `<meta>` right after the head content. `init` overrides the init options, e.g. `{ webvisor: true }`.
+- `metrika-pixel.astro` is the `<noscript>` pixel for visitors without JavaScript. It goes into `<body>`, since an image isn't allowed in `<noscript>` inside `<head>`.
+
+```astro
+---
+import Metrika from '@aimuzov-projects/infra-site-kit/metrika.astro'
+import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
+---
+
+<head>
+	<Metrika id={12345678} />
+</head>
+<body>
+	<MetrikaPixel id={12345678} />
+</body>
+```
+
+The site's `security.csp` keeps no Yandex sources: the component brings them only to pages that have it.
+
 ## Renovate
 
 [`default.json`](default.json) is the Renovate preset of the sites: weekly grouped updates (Astro and Svelte, tooling, Node, GitHub Actions), a 3-day wait after a release, no automerge. A site turns it on with `renovate.json`:

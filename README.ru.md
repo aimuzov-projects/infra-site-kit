@@ -102,6 +102,29 @@ import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
 
 По умолчанию круг показывает схему, противоположную текущей. Переключатель с кнопкой на каждую тему передаёт свою: `{@attach (node) => themePeek(node, { target: () => 'dark' })}`. Если цель совпадает с текущей схемой, показывать нечего и круга нет. Из нескольких кнопок рядом круг рисует только ближайшая к курсору, а клик по любой гасит его для всех.
 
+## Яндекс Метрика
+
+Счётчик грузит `tag.js` по первому действию или через 4 с после `load`, чтобы скрипт на ~85 КБ не отнимал канал у шрифтов и первого фото; вызовы `ym` до того ждут в очереди. Вебвизор выключен: на мобильном он поднимает LCP.
+
+- `metrika.astro` ставится в `<head>`. Он выводит сниппет инлайном и через `Astro.csp` кладёт в CSP страницы его хеш, `mc.yandex.ru` и `yastatic.net`, сливая их с директивами сайта. Из `<body>` было бы поздно: Astro пишет `<meta>` с CSP сразу после содержимого `<head>`. `init` переопределяет параметры инициализации, например `{ webvisor: true }`.
+- `metrika-pixel.astro` — пиксель в `<noscript>` для посетителей без JavaScript. Он ставится в `<body>`, потому что картинка в `<noscript>` внутри `<head>` не разрешена.
+
+```astro
+---
+import Metrika from '@aimuzov-projects/infra-site-kit/metrika.astro'
+import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
+---
+
+<head>
+	<Metrika id={12345678} />
+</head>
+<body>
+	<MetrikaPixel id={12345678} />
+</body>
+```
+
+В `security.csp` сайта источников Яндекса нет: компонент приносит их только на страницы, где он стоит.
+
 ## Renovate
 
 [`default.json`](default.json) — пресет Renovate для сайтов: обновления раз в неделю группами (Astro и Svelte, инструменты, Node, GitHub Actions), 3 дня выдержки после релиза, без автомержа. Сайт включает его файлом `renovate.json`:
