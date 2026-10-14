@@ -50,7 +50,7 @@ jobs:
 The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.3.1
+npm install -D github:aimuzov-projects/infra-site-kit#v1.3.2
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -63,7 +63,7 @@ npm takes the package as a tarball from GitHub, so the build image needs no git.
 
 ## Author credit
 
-The credit line every site shares: "2026 © Сделано [mark] aimuzov" and, when `repo` is given, an "Исходный код" link with the GitHub mark. The mark is a face with a mustache drawn as one evenodd path with no masks or ids, so a page may hold any number of copies.
+The credit line every site shares: "2026 © Сделано с любовью [mark] aimuzov" and, when `repo` is given, an "Исходный код" link with the GitHub mark. The mark is a face with a mustache drawn as one evenodd path with no masks or ids, so a page may hold any number of copies.
 
 - `credit.astro` is for static pages: the same markup plus a script that sets the year by the visitor's clock. Without it the build year stays until the next deploy. Astro inlines the script and puts its hash into the CSP with the rest.
 - `credit.svelte` is for Svelte apps, where the year is computed in the browser anyway.

@@ -19,8 +19,8 @@
      one never starts with an indent. -->
 <span class={['credit', className]}>
 	<span class="credit__group">
-		{#if copyright}<span data-year>{year}</span> ©{/if}
-		Сделано
+		{#if copyright}<span class="credit__year"><span data-year>{year}</span> ©</span>{/if}
+		Сделано с&nbsp;любовью
 		<a class="credit__link" href="https://github.com/aimuzov" target="_blank" rel="noopener"
 			><svg class="credit__icon" viewBox="-3 0 30.1 24" width="20" height="16" fill="currentColor" aria-hidden="true">
 				<!-- A round face with a handlebar mustache: cut out inside the face, filled past its
@@ -48,6 +48,11 @@
 		&__group,
 		&__link {
 			white-space: nowrap;
+		}
+
+		/* The year stands apart from the phrase, a plain space glues them into one word. */
+		&__year {
+			margin-right: 0.5em;
 		}
 
 		&__link {
