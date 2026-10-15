@@ -1,8 +1,32 @@
-# infra-site-kit
+<p align="center">
+	<a href="README.md"><img src="https://img.shields.io/badge/English-555?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2MCAzMCI+PGNsaXBQYXRoIGlkPSJ0Ij48cGF0aCBkPSJNMzAsMTVoMzB2MTV6djE1aC0zMHpoLTMwdi0xNXp2LTE1aDMweiIvPjwvY2xpcFBhdGg+PHBhdGggZD0iTTAsMHYzMGg2MHYtMzB6IiBmaWxsPSIjMDEyMTY5Ii8+PHBhdGggZD0iTTAsMCA2MCwzME02MCwwIDAsMzAiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSI2Ii8+PHBhdGggZD0iTTAsMCA2MCwzME02MCwwIDAsMzAiIGNsaXAtcGF0aD0idXJsKCN0KSIgc3Ryb2tlPSIjQzgxMDJFIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMzAsMHYzME0wLDE1aDYwIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMTAiLz48cGF0aCBkPSJNMzAsMHYzME0wLDE1aDYwIiBzdHJva2U9IiNDODEwMkUiIHN0cm9rZS13aWR0aD0iNiIvPjwvc3ZnPg==" alt="English"></a>
+	<img src="https://img.shields.io/badge/%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9-8b5cf6?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5IDYiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIDBoOXYzSDB6Ii8+PHBhdGggZmlsbD0iIzAwMzlhNiIgZD0iTTAgMmg5djJIMHoiLz48cGF0aCBmaWxsPSIjZDUyYjFlIiBkPSJNMCA0aDl2MkgweiIvPjwvc3ZnPg==" alt="Русский">
+</p>
 
-[English](README.md)
+<p align="center">
+	<a href="https://github.com/aimuzov-projects/infra-site-kit/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov-projects/infra-site-kit/check.yml?branch=main&label=check" alt="Check"></a>
+	<a href="https://github.com/aimuzov-projects/infra-site-kit/tags"><img src="https://img.shields.io/github/v/tag/aimuzov-projects/infra-site-kit?sort=semver&label=version" alt="Version"></a>
+	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov-projects%2Finfra-site-kit%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
+	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
+	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
+	<a href="https://playwright.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/@playwright/test?label=playwright&color=2ead33" alt="Playwright"></a>
+	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov-projects/infra-site-kit" alt="License"></a>
+</p>
+
+<h3 align="center">Одно место для того, что общее у всех сайтов</h3>
+<p align="center">Actions проверки, релиза и деплоя, конфиги линтеров и Playwright, строка автора, подсмотр темы и Яндекс Метрика</p>
 
 Общий CI, конфиги линтеров и e2e для сайтов aimuzov-projects, собранных из [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). Правка проверок, деплоя или стиля кода попадает сюда один раз, а не в каждый сайт.
+
+## Что внутри
+
+- [**Actions**](#actions) `check`, `release` и `deploy`: шаги workflow сайтов, от `npm ci` до деплоя по SSH.
+- [**Конфиги**](#конфиги) Prettier, Stylelint (с BEM) и oxlint вместе с плагинами.
+- [**Строка автора**](#строка-автора): общая строка футера для Astro и Svelte.
+- [**Подсмотреть тему**](#подсмотреть-тему): кнопка темы, которая показывает другую схему в круге вокруг себя.
+- [**Яндекс Метрика**](#яндекс-метрика), которая грузится после первого взаимодействия и сама добавляет свои источники в CSP.
+- [**E2E-тесты**](#e2e-тесты): пресет Playwright и проверки, общие для всех сайтов.
+- [**Renovate**](#renovate): пресет обновлений для сайтов.
 
 ## Actions
 
@@ -74,7 +98,7 @@ release-please читает `release-please-config.json` (`"release-type": "node
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.4.3
+npm install -D github:aimuzov-projects/infra-site-kit#v1.8.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -196,6 +220,20 @@ siteChecks({
 { "extends": ["github>aimuzov-projects/infra-site-kit"] }
 ```
 
+## Разработка
+
+Node берётся из `engines` в [`package.json`](package.json). Те же проверки, что в CI ([`check.yml`](.github/workflows/check.yml)):
+
+```bash
+npm ci
+npm run format:check && npm test
+npx playwright install chromium
+npm run test:e2e
+```
+
+- Юнит-тесты (`node --test`) гоняют конфиги по [`test/site`](test/site), который берёт их по имени пакета, как это делает сайт, и проверяют год в строке автора, сниппет Метрики и геометрию круга темы.
+- Astro-сайта в ките нет, поэтому e2e гоняет общие проверки по двухстраничной заглушке из [`test/e2e/server.mjs`](test/e2e/server.mjs): sitemap с продовым доменом, кнопка темы с кругом и отложенная Метрика.
+
 ## Версии
 
 Actions сайты берут по мажорному тегу `v1`, пакет — по точному тегу вроде `v1.1.0`. Совместимая правка получает тег `v1.x.y` и переносит на него `v1`, ломающая начинает `v2`.
@@ -203,3 +241,9 @@ Actions сайты берут по мажорному тегу `v1`, пакет 
 ```bash
 git tag v1.0.1 && git tag -f v1 && git push origin v1.0.1 && git push -f origin v1
 ```
+
+Версия в `package.json` поднимается коммитом `chore: release 1.x.y` до тега. Затем сайты переносят пин пакета на новый тег.
+
+## Лицензия
+
+[MIT](LICENSE)
