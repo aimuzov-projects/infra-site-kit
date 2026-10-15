@@ -4,6 +4,10 @@
 </p>
 
 <p align="center">
+	<img src=".github/assets/banner.en.jpg" alt="infra-site-kit: shared CI, configs and site parts" width="100%">
+</p>
+
+<p align="center">
 	<a href="https://github.com/aimuzov-projects/infra-site-kit/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov-projects/infra-site-kit/check.yml?branch=main&label=check" alt="Check"></a>
 	<a href="https://github.com/aimuzov-projects/infra-site-kit/tags"><img src="https://img.shields.io/github/v/tag/aimuzov-projects/infra-site-kit?sort=semver&label=version" alt="Version"></a>
 	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov-projects%2Finfra-site-kit%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
