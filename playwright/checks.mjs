@@ -1,8 +1,10 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
+import { sitemapLocs } from '../site/sitemap.js'
+
 // Проверки, общие для всех сайтов: страницы из sitemap, доступность, переключатель темы
-// с подглядыванием и ленивая Яндекс Метрика. `siteChecks()` регистрирует их как тесты,
+// с подглядыванием, ленивая Яндекс Метрика и страница 404. `siteChecks()` регистрирует их как тесты,
 // но каждую функцию можно звать и по отдельности внутри тестов самого сайта.
 
 /** @typedef {import('@playwright/test').Page} Page */
@@ -12,8 +14,6 @@ import { expect, test } from '@playwright/test'
 /** WCAG 2.1 уровней A и AA: то, что axe умеет проверить автоматически. */
 const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const METRIKA_TAG = /^https:\/\/mc\.yandex\.ru\/metrika\/tag\.js/
-
-const locs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(([, loc]) => loc)
 
 /**
  * Пути страниц, перечисленных в sitemap, отсортированные.
@@ -32,12 +32,12 @@ export async function sitemapPaths(request, index = '/sitemap-index.xml') {
 
 	const paths = []
 
-	for (const sitemap of locs(await response.text())) {
+	for (const sitemap of sitemapLocs(await response.text())) {
 		const part = await request.get(new URL(sitemap).pathname)
 
 		expect(part.status(), `${sitemap} is missing`).toBe(200)
 
-		for (const loc of locs(await part.text())) paths.push(new URL(loc).pathname)
+		for (const loc of sitemapLocs(await part.text())) paths.push(new URL(loc).pathname)
 	}
 
 	expect(paths, `${index} lists no pages`).not.toHaveLength(0)
@@ -192,6 +192,7 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
 	await page.route(/^https:\/\/(mc\.yandex\.ru|yastatic\.net)\//, (route) =>
 		route.fulfill({ status: 200, contentType: 'text/javascript', body: '' }),
 	)
+
 	page.on('request', (request) => {
 		if (METRIKA_TAG.test(request.url())) loads.push(request.url())
 	})
@@ -210,6 +211,90 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
 	await expect.poll(() => loads.length, { message: 'tag.js did not load after a key press' }).toBe(1)
 }
 
+/** Адрес, которого заведомо нет на сайте. */
+const MISSING = '/kit-404-probe'
+
+/**
+ * Открывает несуществующий адрес и проверяет общую 404: ответ 404, `noindex`, ссылка
+ * на главную, кнопка "Назад" для пришедших с сайта и никаких ошибок в консоли, кроме
+ * самого ответа 404.
+ *
+ * @param {Page} page
+ * @param {{ path?: string, home?: string, ignore?: RegExp[] }} [options]
+ */
+export async function expectNotFound(page, { path = MISSING, home = '/', ignore = [] } = {}) {
+	const errors = []
+	const onConsole = (message) => {
+		if (message.type() !== 'error' || ignore.some((re) => re.test(message.text()))) return
+
+		// Chromium пишет в консоль сам ответ 404 документа, это и проверяем.
+		if (new URL(message.location().url || 'about:blank', page.url()).pathname === path) return
+
+		errors.push(message.text())
+	}
+
+	page.on('console', onConsole)
+
+	try {
+		const response = await page.goto(path)
+
+		expect(response?.status(), `${path} status`).toBe(404)
+
+		// theme-peek кладёт в конец страницы её копию, вместе со второй 404: берём настоящую.
+		const root = page.locator('[data-not-found]').first()
+
+		await expect(root, `${path} has no not-found.astro`).toBeVisible()
+		await expect(page.locator('meta[name="robots"]'), `${path} is indexed`).toHaveAttribute('content', /noindex/)
+		await expect(root.locator(`a[href="${home}"]`).first(), `${path} has no link home`).toBeVisible()
+
+		const back = root.locator('[data-not-found-back]')
+
+		if (await back.count()) {
+			await expect(back, 'Back is shown without a page to go back to').toBeHidden()
+
+			// Переход скриптом, а не `goto`, чтобы у 404 был referrer с этого же сайта.
+			await page.goto(home)
+			await page.evaluate((target) => location.assign(target), path)
+			await page.waitForURL((url) => url.pathname === path)
+			await back.click()
+			await page.waitForURL((url) => url.pathname === home)
+		}
+
+		await page.waitForLoadState('load')
+		expect.soft(errors, `${path} console errors`).toEqual([])
+	} finally {
+		page.off('console', onConsole)
+	}
+}
+
+/**
+ * Портит адрес страницы из sitemap одной буквой и ждёт её в подсказках 404.
+ *
+ * `exclude` -- те же префиксы, что у not-found.astro: страницы под ними эта 404 не подсказывает,
+ * например русские у английской 404 двуязычного сайта.
+ *
+ * @param {Page} page
+ * @param {APIRequestContext} request
+ * @param {{ index?: string, exclude?: string[] }} [options]
+ */
+export async function expectNotFoundSuggests(page, request, { index, exclude = [] } = {}) {
+	// Самый длинный путь: у короткого опечатка может попасть в другую страницу.
+	const target = (await sitemapPaths(request, index))
+		.filter((path) => path !== '/' && !exclude.some((prefix) => path.startsWith(prefix)))
+		.sort((a, b) => b.length - a.length)[0]
+
+	expect(target, 'the sitemap lists only the home page').toBeTruthy()
+
+	const typo = target.replace(/\/$/, '').slice(0, -1)
+
+	await page.goto(typo)
+
+	await expect(
+		page.locator(`[data-not-found-suggest] a[href="${target}"]`).first(),
+		`${typo} does not suggest ${target}`,
+	).toBeVisible()
+}
+
 /**
  * Регистрирует общие проверки как тесты текущего файла.
  *
@@ -221,8 +306,10 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
  * @param {{ button: (page: Page) => Locator, path?: string, persist?: boolean, peek?: boolean }} [options.theme]
  * Кнопка темы, без неё тема не проверяется.
  * @param {boolean | { path?: string }} [options.metrika] Страница со счётчиком Метрики.
+ * @param {boolean | { path?: string, home?: string, suggest?: boolean, exclude?: string[] }} [options.notFound]
+ * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента.
  */
-export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme, metrika } = {}) {
+export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme, metrika, notFound } = {}) {
 	test.describe('site', () => {
 		if (pages) {
 			test('every sitemap page answers 200 without console errors', async ({ page, request }) => {
@@ -260,6 +347,28 @@ export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme,
 		if (metrika) {
 			test('Yandex Metrika waits for the first interaction', ({ page }) =>
 				expectMetrikaDeferred(page, metrika === true ? {} : metrika))
+		}
+
+		if (notFound) {
+			const options = notFound === true ? {} : notFound
+
+			test('a missing page answers 404 with a way home', ({ page }) =>
+				expectNotFound(page, { ...options, ignore: ignoreConsole }))
+
+			if (a11y) {
+				for (const colorScheme of /** @type {const} */ (['light', 'dark'])) {
+					test(`the not-found page passes axe in the ${colorScheme} scheme`, async ({ page }) => {
+						await page.emulateMedia({ colorScheme })
+						await page.goto(options.path ?? MISSING)
+						await expectAccessible(page, a11y)
+					})
+				}
+			}
+
+			if (options.suggest !== false) {
+				test('the not-found page suggests the page with a typo', ({ page, request }) =>
+					expectNotFoundSuggests(page, request, options))
+			}
 		}
 	})
 }

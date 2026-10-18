@@ -4,6 +4,7 @@ import {
 	expectAccessible,
 	expectHealthyPage,
 	expectMetrikaDeferred,
+	expectNotFound,
 	expectThemePeek,
 	sitemapPaths,
 	siteChecks,
@@ -13,6 +14,7 @@ import {
 siteChecks({
 	theme: { button: (page) => page.getByRole('button', { name: 'Switch the theme' }) },
 	metrika: true,
+	notFound: true,
 })
 
 test('the sitemap paths drop the production domain', async ({ request }) => {
@@ -32,6 +34,7 @@ test.fail('a Metrika that loads right away fails its check', async ({ page }) =>
 		page,
 		'<title>x</title><script>window.ym = () => {}</script><script src="https://mc.yandex.ru/metrika/tag.js?id=1"></script>',
 	)
+
 	await expectMetrikaDeferred(page, { path: '/about/' })
 })
 
@@ -44,4 +47,9 @@ test.fail('a button without a name fails axe', async ({ page }) => {
 test.fail('a theme button without the peek fails its check', async ({ page }) => {
 	await serve(page, '<html lang="en"><title>x</title><button>Theme</button></html>')
 	await expectThemePeek(page, page.getByRole('button'), { path: '/about/' })
+})
+
+test.fail('a missing page that answers 200 fails the not-found check', async ({ page }) => {
+	await page.route('/kit-404-probe', (route) => route.fulfill({ contentType: 'text/html', body: '<title>x</title>' }))
+	await expectNotFound(page)
 })

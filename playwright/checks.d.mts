@@ -57,6 +57,27 @@ export function expectThemePeek(page: Page, button: Locator, options?: { path?: 
  */
 export function expectMetrikaDeferred(page: Page, options?: { path?: string }): Promise<void>
 
+/**
+ * Открывает несуществующий адрес и проверяет общую 404 из not-found.astro: ответ 404,
+ * `noindex`, ссылку на главную, кнопку "Назад" и чистую консоль.
+ *
+ * @param options.path - Несуществующий адрес, по умолчанию `/kit-404-probe`.
+ * @param options.home - Адрес главной, по умолчанию `/`.
+ * @param options.ignore - Ошибки консоли, которые пропускаем.
+ */
+export function expectNotFound(page: Page, options?: { path?: string; home?: string; ignore?: RegExp[] }): Promise<void>
+
+/**
+ * Портит адрес страницы из sitemap одной буквой и ждёт её в подсказках 404.
+ *
+ * @param options.exclude - Префиксы, которые эта 404 не подсказывает, как `exclude` у not-found.astro.
+ */
+export function expectNotFoundSuggests(
+	page: Page,
+	request: APIRequestContext,
+	options?: { index?: string; exclude?: string[] },
+): Promise<void>
+
 /** Регистрирует общие проверки как тесты текущего файла. */
 export function siteChecks(options?: {
 	/** Каждая страница из sitemap отвечает 200 без ошибок в консоли, по умолчанию `true`. */
@@ -74,4 +95,6 @@ export function siteChecks(options?: {
 	}
 	/** Проверка Метрики, с `true` проверяется страница `/`. */
 	metrika?: boolean | { path?: string }
+	/** Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента. */
+	notFound?: boolean | { path?: string; home?: string; suggest?: boolean; exclude?: string[] }
 }): void
