@@ -212,12 +212,16 @@ function unlisten() {
  * Цепляет круг к кнопке темы. Как есть работает и как Svelte attachment:
  * `{@attach themePeek}`. Возвращает функцию очистки.
  * @param {HTMLElement} anchor
- * @param {{ target?: (current: Scheme) => Scheme | undefined }} [options] `target` -- схема,
- * которую показывает круг, по умолчанию противоположная текущей. Если она совпадает
- * с текущей, то показывать нечего и круг остаётся скрытым.
+ * @param {{ target?: (current: Scheme) => Scheme | undefined, approach?: boolean }} [options]
+ * `target` -- схема, которую показывает круг, по умолчанию противоположная текущей. Если она
+ * совпадает с текущей, то показывать нечего и круг остаётся скрытым. `approach: false` убирает
+ * бледный круг на подходе, когда вплотную к кнопке стоят другие: круг будет только при наведении.
  * @returns {(() => void) | undefined}
  */
-export function themePeek(anchor, { target = (current) => (current === 'dark' ? 'light' : 'dark') } = {}) {
+export function themePeek(
+	anchor,
+	{ target = (current) => (current === 'dark' ? 'light' : 'dark'), approach = true } = {},
+) {
 	// Без мыши приближаться нечем, а reduced motion просит обойтись без круга.
 	if (!matchMedia('(hover: hover)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
@@ -261,7 +265,7 @@ export function themePeek(anchor, { target = (current) => (current === 'dark' ? 
 
 		if (entry.hovered) return { r: openRadius(cx, cy, view.width, view.height), opacity: 1 }
 
-		if (!pointer) return { r: 0, opacity: 0 }
+		if (!approach || !pointer) return { r: 0, opacity: 0 }
 
 		const own = Math.hypot(pointer.x - cx, pointer.y - cy)
 

@@ -145,6 +145,25 @@ test('the circle grows faintly as the pointer nears the button and is not there 
 	assert.equal(peeks().length, 0)
 })
 
+test('with approach off the circle stays hidden as the pointer nears and still opens on hover', () => {
+	const anchor = button(100, 10)
+	const cleanup = themePeek(anchor, { approach: false })
+
+	move(100, 30)
+	page.flush()
+	assert.equal(peeks().length, 0)
+
+	anchor.listeners.pointerenter()
+	page.flush()
+
+	const [peek] = peeks()
+
+	assert.equal(peek.style.getPropertyValue('--peek-r'), `${coverRadius(100, 10, 1000, 800)}px`)
+	assert.equal(peek.classList.contains('theme-peek--open'), true)
+
+	cleanup()
+})
+
 test('of two buttons only the one nearest the pointer draws the circle', () => {
 	const cleanups = [themePeek(button(100, 10)), themePeek(button(160, 10))]
 
