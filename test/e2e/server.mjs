@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { metrikaScript } from '../../site/metrika.js'
 
 // Двухстраничный сайт для e2e-проверок кита: sitemap с продовым доменом, кнопка темы
-// с `theme-peek.js` и ленивая Метрика. Всё как у сайтов после сборки.
+// на `theme.js` и `theme-peek.js` и ленивая Метрика. Всё как у сайтов после сборки.
 
 const root = join(import.meta.dirname, '../..')
 const port = Number(process.env.E2E_PORT ?? 4399)
@@ -24,10 +24,7 @@ const page = (title, body) => `<!doctype html>
 			body, .theme-peek { margin: 0; padding: 1rem; color: light-dark(#111, #eee); background: light-dark(#fff, #111); }
 			a { color: inherit; }
 		</style>
-		<script>
-			const stored = localStorage.getItem('theme')
-			if (stored) document.documentElement.dataset.theme = stored
-		</script>
+		<script src="/site/theme-boot.js"></script>
 		<script>${metrikaScript(12345678)}</script>
 	</head>
 	<body>
@@ -37,21 +34,13 @@ const page = (title, body) => `<!doctype html>
 		</header>
 		<main><h1>${title}</h1>${body}</main>
 		<script type="module">
+			import { toggleTheme } from '/site/theme.js'
 			import { themePeek } from '/site/theme-peek.js'
 
 			const button = document.querySelector('button')
-			const next = { system: 'light', light: 'dark', dark: 'system' }
 
 			themePeek(button)
-			button.addEventListener('click', () => {
-				const theme = next[document.documentElement.dataset.theme ?? 'system']
-
-				if (theme === 'system') delete document.documentElement.dataset.theme
-				else document.documentElement.dataset.theme = theme
-
-				if (theme === 'system') localStorage.removeItem('theme')
-				else localStorage.setItem('theme', theme)
-			})
+			button.addEventListener('click', () => toggleTheme())
 		</script>
 	</body>
 </html>`
