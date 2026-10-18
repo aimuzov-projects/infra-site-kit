@@ -238,7 +238,7 @@ import Base from '#frontend/layouts/base.astro'
 </Base>
 ```
 
-- Пропсы: `title`, `text`, `home={{ href, label }}`, `back` (`false` убирает кнопку), `suggest` (`false` убирает подсказки и запрос sitemap), `sitemap` (путь индекса, по умолчанию `/sitemap-index.xml`). Тексты по умолчанию русские.
+- Пропсы: `title`, `text`, `home={{ href, label }}`, `back` (`false` убирает кнопку), `suggest` (`false` убирает подсказки и запрос sitemap), `sitemap` (путь индекса, по умолчанию `/sitemap-index.xml`), `scope` и `exclude` (префиксы путей: у двуязычного сайта своя 404 на каждый язык, `scope="/ru/"` у русской и `exclude={['/ru/']}` у английской, и каждая подсказывает только свои страницы). Тексты по умолчанию русские.
 - Слот по умолчанию встаёт под текстом (второй язык, строка про контакты), слот `actions` — после кнопок, и класс `not-found__action` даёт ссылке тот же вид.
 - Тема сайта приходит CSS-переменными: `--not-found-accent` (лицо, главная кнопка и ссылки, по умолчанию `currentColor`), `--not-found-muted`, `--not-found-radius`, `--not-found-gap`. Шрифт и фон наследуются.
 - `not-found.js` — та же логика без разметки: `suggestPaths(path, paths)`, `canGoBack()` и `notFound(root)`; `sitemap.js` читает sitemap в браузере, `mark.js` — путь лица.

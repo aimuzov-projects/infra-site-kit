@@ -44,6 +44,17 @@ test('suggestPaths lists one address once', () => {
 	assert.deepEqual(suggestPaths('/abut', ['/about', '/about/', '/About/index.html']), ['/about'])
 })
 
+test('suggestPaths keeps a language to its own pages', () => {
+	const both = ['/', '/extras', '/about/', '/ru/', '/ru/extras', '/ru/about/']
+
+	assert.deepEqual(suggestPaths('/ru/extra', both, { scope: '/ru/' }), ['/ru/extras'])
+	assert.deepEqual(suggestPaths('/ru/about/old', both, { scope: '/ru' }), ['/ru/about/'])
+	assert.deepEqual(suggestPaths('/rux', both, { scope: '/ru/' }), [])
+	assert.deepEqual(suggestPaths('/ru/', ['/ru/', '/ru/a/'], { scope: '/ru/' }), ['/ru/a/'])
+	assert.ok(!suggestPaths('/ru', both, { exclude: ['/ru/'] }).some((path) => path.startsWith('/ru')))
+	assert.deepEqual(suggestPaths('/extr', both, { exclude: ['/ru/'] }), ['/extras'])
+})
+
 test('canGoBack needs a referrer from the same site and some history', () => {
 	const doc = (referrer) => ({ referrer, location: { origin: 'https://example.com' } })
 

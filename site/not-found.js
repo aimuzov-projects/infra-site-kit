@@ -51,13 +51,19 @@ function distance(a, b) {
  * которой адрес продолжается по сегментам: `/docs/old/page` подскажет `/docs`.
  * Главную не предлагаем, на неё и так ведёт кнопка.
  *
+ * На двуязычном сайте у каждого языка своя 404: `scope` оставляет страницы под своим
+ * префиксом, `exclude` убирает чужие, и русская 404 не подскажет английскую страницу.
+ *
  * @param {string} path Ненайденный путь.
  * @param {string[]} paths Пути страниц сайта.
- * @param {{ limit?: number }} [options]
+ * @param {{ limit?: number, scope?: string, exclude?: string[] }} [options]
  * @returns {string[]}
  */
-export function suggestPaths(path, paths, { limit = 3 } = {}) {
+export function suggestPaths(path, paths, { limit = 3, scope = '/', exclude = [] } = {}) {
 	const target = normalize(path)
+	const root = normalize(scope)
+	const under = (key, prefix) => key === prefix || key.startsWith(`${prefix}/`)
+	const foreign = exclude.map(normalize)
 	const budget = Math.max(2, Math.ceil(target.length / 3))
 	const seen = new Set()
 	const scored = []
@@ -65,7 +71,10 @@ export function suggestPaths(path, paths, { limit = 3 } = {}) {
 	for (const candidate of paths) {
 		const key = normalize(candidate)
 
-		if (!key || seen.has(key)) continue
+		// Главная языка -- та же кнопка "На главную", её тоже не предлагаем.
+		if (!key || key === root || seen.has(key)) continue
+
+		if (!under(key, root) || foreign.some((prefix) => under(key, prefix))) continue
 
 		seen.add(key)
 
@@ -102,7 +111,8 @@ export function canGoBack(doc = document, hist = history) {
 
 /**
  * Оживляет разметку not-found.astro: показывает "Назад", если есть куда, и подгружает
- * подсказки из sitemap, если `data-sitemap` задан. Пока подсказок нет или sitemap
+ * подсказки из sitemap, если `data-sitemap` задан. `data-scope` и `data-exclude` (префиксы
+ * через запятую) сужают подсказки так же, как `scope` и `exclude` у suggestPaths. Пока подсказок нет или sitemap
  * не загрузилась, блок остаётся скрытым: 404 работает и без него.
  *
  * @param {HTMLElement} root Элемент с `data-not-found`.
@@ -130,7 +140,10 @@ export async function notFound(root) {
 		return
 	}
 
-	const found = suggestPaths(location.pathname, paths)
+	const found = suggestPaths(location.pathname, paths, {
+		scope: root.dataset.scope,
+		exclude: root.dataset.exclude?.split(',').filter(Boolean),
+	})
 
 	if (!found.length) return
 

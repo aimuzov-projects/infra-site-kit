@@ -16,6 +16,10 @@ type Props = {
 	suggest?: string | false
 	/** Индекс sitemap, из которого берутся подсказки. */
 	sitemap?: string
+	/** Префикс, под которым ищутся подсказки, например `/ru/` у русской 404. */
+	scope?: string
+	/** Префиксы, которые в подсказки не попадают, например `['/ru/']` у английской 404. */
+	exclude?: string[]
 	class?: string
 }
 
@@ -26,11 +30,19 @@ const {
 	back = 'Назад',
 	suggest = 'Возможно, вы искали',
 	sitemap = '/sitemap-index.xml',
+	scope,
+	exclude,
 	class: className,
 } = Astro.props
 ---
 
-<div class:list={['not-found', className]} data-not-found data-sitemap={suggest ? sitemap : undefined}>
+<div
+	class:list={['not-found', className]}
+	data-not-found
+	data-sitemap={suggest ? sitemap : undefined}
+	data-scope={scope}
+	data-exclude={exclude?.join(',')}
+>
 	<!-- Крупный код -- картинка, а не заголовок: читалки её пропускают и начинают с `<h1>`. -->
 	<p class="not-found__code" aria-hidden="true">
 		<span>4</span>

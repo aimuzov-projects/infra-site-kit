@@ -238,7 +238,7 @@ import Base from '#frontend/layouts/base.astro'
 </Base>
 ```
 
-- Props: `title`, `text`, `home={{ href, label }}`, `back` (`false` drops the button), `suggest` (`false` drops the suggestions and the sitemap request), `sitemap` (the index path, `/sitemap-index.xml` by default). The defaults are in Russian.
+- Props: `title`, `text`, `home={{ href, label }}`, `back` (`false` drops the button), `suggest` (`false` drops the suggestions and the sitemap request), `sitemap` (the index path, `/sitemap-index.xml` by default), `scope` and `exclude` (path prefixes: a bilingual site gives each language its own 404, `scope="/ru/"` on the Russian one and `exclude={['/ru/']}` on the English one, so each suggests only its own pages). The defaults are in Russian.
 - The default slot goes under the text (a second language, a contact line); the `actions` slot goes after the buttons, and the `not-found__action` class gives a link the same look.
 - The site theme comes through custom properties: `--not-found-accent` (the face, the main button and the links; `currentColor` by default), `--not-found-muted`, `--not-found-radius`, `--not-found-gap`. The font and the background are inherited.
 - `not-found.js` is the same logic without markup: `suggestPaths(path, paths)`, `canGoBack()` and `notFound(root)`; `sitemap.js` reads the sitemap in the browser, `mark.js` is the face path.
