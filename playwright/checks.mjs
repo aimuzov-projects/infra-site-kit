@@ -269,14 +269,17 @@ export async function expectNotFound(page, { path = MISSING, home = '/', ignore 
 /**
  * Портит адрес страницы из sitemap одной буквой и ждёт её в подсказках 404.
  *
+ * `exclude` -- те же префиксы, что у not-found.astro: страницы под ними эта 404 не подсказывает,
+ * например русские у английской 404 двуязычного сайта.
+ *
  * @param {Page} page
  * @param {APIRequestContext} request
- * @param {{ index?: string }} [options]
+ * @param {{ index?: string, exclude?: string[] }} [options]
  */
-export async function expectNotFoundSuggests(page, request, { index } = {}) {
+export async function expectNotFoundSuggests(page, request, { index, exclude = [] } = {}) {
 	// Самый длинный путь: у короткого опечатка может попасть в другую страницу.
 	const target = (await sitemapPaths(request, index))
-		.filter((path) => path !== '/')
+		.filter((path) => path !== '/' && !exclude.some((prefix) => path.startsWith(prefix)))
 		.sort((a, b) => b.length - a.length)[0]
 
 	expect(target, 'the sitemap lists only the home page').toBeTruthy()
@@ -302,8 +305,8 @@ export async function expectNotFoundSuggests(page, request, { index } = {}) {
  * @param {{ button: (page: Page) => Locator, path?: string, persist?: boolean, peek?: boolean }} [options.theme]
  * Кнопка темы, без неё тема не проверяется.
  * @param {boolean | { path?: string }} [options.metrika] Страница со счётчиком Метрики.
- * @param {boolean | { path?: string, home?: string, suggest?: boolean }} [options.notFound]
- * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок.
+ * @param {boolean | { path?: string, home?: string, suggest?: boolean, exclude?: string[] }} [options.notFound]
+ * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента.
  */
 export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme, metrika, notFound } = {}) {
 	test.describe('site', () => {
@@ -363,7 +366,7 @@ export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme,
 
 			if (options.suggest !== false) {
 				test('the not-found page suggests the page with a typo', ({ page, request }) =>
-					expectNotFoundSuggests(page, request))
+					expectNotFoundSuggests(page, request, options))
 			}
 		}
 	})

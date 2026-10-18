@@ -67,11 +67,15 @@ export function expectMetrikaDeferred(page: Page, options?: { path?: string }): 
  */
 export function expectNotFound(page: Page, options?: { path?: string; home?: string; ignore?: RegExp[] }): Promise<void>
 
-/** Портит адрес страницы из sitemap одной буквой и ждёт её в подсказках 404. */
+/**
+ * Портит адрес страницы из sitemap одной буквой и ждёт её в подсказках 404.
+ *
+ * @param options.exclude - Префиксы, которые эта 404 не подсказывает, как `exclude` у not-found.astro.
+ */
 export function expectNotFoundSuggests(
 	page: Page,
 	request: APIRequestContext,
-	options?: { index?: string },
+	options?: { index?: string; exclude?: string[] },
 ): Promise<void>
 
 /** Регистрирует общие проверки как тесты текущего файла. */
@@ -91,6 +95,6 @@ export function siteChecks(options?: {
 	}
 	/** Проверка Метрики, с `true` проверяется страница `/`. */
 	metrika?: boolean | { path?: string }
-	/** Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок. */
-	notFound?: boolean | { path?: string; home?: string; suggest?: boolean }
+	/** Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента. */
+	notFound?: boolean | { path?: string; home?: string; suggest?: boolean; exclude?: string[] }
 }): void
