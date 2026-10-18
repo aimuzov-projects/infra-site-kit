@@ -3,9 +3,9 @@ import { expect, test } from '@playwright/test'
 
 import { sitemapLocs } from '../site/sitemap.js'
 
-// Проверки, общие д�"я всех сайтов: страницы из sitemap, доступность, перек�"ючате�"ь темы
-// с подг�"ядыванием, �"енивая Яндекс Метрика и страница 404. `siteChecks()` регистрирует их как тесты,
-// но каждую функцию можно звать и по отде�"ьности внутри тестов самого сайта.
+// Проверки, общие для всех сайтов: страницы из sitemap, доступность, переключатель темы
+// с подглядыванием, ленивая Яндекс Метрика и страница 404. `siteChecks()` регистрирует их как тесты,
+// но каждую функцию можно звать и по отдельности внутри тестов самого сайта.
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** @typedef {import('@playwright/test').Locator} Locator */
@@ -16,9 +16,9 @@ const A11Y_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const METRIKA_TAG = /^https:\/\/mc\.yandex\.ru\/metrika\/tag\.js/
 
 /**
- * Пути страниц, перечис�"енных в sitemap, отсортированные.
+ * Пути страниц, перечисленных в sitemap, отсортированные.
  *
- * В sitemap адреса записаны с продовым доменом, поэтому берём то�"ько путь
+ * В sitemap адреса записаны с продовым доменом, поэтому берём только путь
  * и запрашиваем страницу у сервера, который тестируем.
  *
  * @param {APIRequestContext} request
@@ -46,14 +46,14 @@ export async function sitemapPaths(request, index = '/sitemap-index.xml') {
 }
 
 /**
- * Открывает страницу и проверяет, что она отвечает 200 и не пишет ошибок в консо�"ь:
- * ни иск�"ючений, ни упавших запросов, ни нарушений CSP.
+ * Открывает страницу и проверяет, что она отвечает 200 и не пишет ошибок в консоль:
+ * ни исключений, ни упавших запросов, ни нарушений CSP.
  *
- * Проверки мягкие (`expect.soft`), то есть тест не обрывается на первой п�"охой странице.
+ * Проверки мягкие (`expect.soft`), то есть тест не обрывается на первой плохой странице.
  *
  * @param {Page} page
  * @param {string} path
- * @param {{ ignore?: RegExp[] }} [options] Ошибки консо�"и, которые пропускаем.
+ * @param {{ ignore?: RegExp[] }} [options] Ошибки консоли, которые пропускаем.
  */
 export async function expectHealthyPage(page, path, { ignore = [] } = {}) {
 	const errors = []
@@ -99,8 +99,8 @@ export async function expectAccessible(page, { disableRules = [], exclude = [] }
 /**
  * Схема, в которой страница нарисована сейчас.
  *
- * Читается так же, как в `theme-peek.js`: по `color-scheme` корня, а ес�"и он остав�"яет
- * выбор открытым (`light dark` и�"и пусто), то по системной настройке.
+ * Читается так же, как в `theme-peek.js`: по `color-scheme` корня, а если он оставляет
+ * выбор открытым (`light dark` или пусто), то по системной настройке.
  *
  * @param {Page} page
  * @returns {Promise<'light' | 'dark'>}
@@ -123,8 +123,8 @@ const nextFrame = (page) => page.evaluate(() => new Promise((resolve) => request
  * Жмёт кнопку темы, пока схема не сменится,
  * и проверяет, что выбор переживает перезагрузку.
  *
- * Перек�"ючате�"ь может снача�"а пройти через "как в системе", а это выг�"ядит так же,
- * поэтому даём ему до трёх к�"иков. Система эму�"ируется свет�"ой.
+ * Переключатель может сначала пройти через "как в системе", а это выглядит так же,
+ * поэтому даём ему до трёх кликов. Система эмулируется светлой.
  *
  * @param {Page} page
  * @param {Locator} button
@@ -139,7 +139,7 @@ export async function expectThemeToggle(page, button, { path = '/', persist = tr
 
 	for (let i = 0; i < 3 && scheme === start; i++) {
 		await button.click()
-		// Ждём кадр пос�"е к�"ика: на г�"аз так приятнее, чем непрерывное ме�"ькание инверсии.
+		// Ждём кадр после клика: на глаз так приятнее, чем непрерывное мелькание инверсии.
 		await nextFrame(page)
 		scheme = await pageScheme(page)
 	}
@@ -154,7 +154,7 @@ export async function expectThemeToggle(page, button, { path = '/', persist = tr
 
 /**
  * Наводит курсор на кнопку темы и проверяет круг из `theme-peek.js`: он раскрывается
- * с копией страницы в другой схеме, скрыт от вспомогате�"ьных техно�"огий и гаснет по к�"ику.
+ * с копией страницы в другой схеме, скрыт от вспомогательных технологий и гаснет по клику.
  *
  * @param {Page} page
  * @param {Locator} button
@@ -177,11 +177,11 @@ export async function expectThemePeek(page, button, { path = '/' } = {}) {
 }
 
 /**
- * Проверяет, что Яндекс Метрика ждёт посетите�"я: счётчик на странице есть, но `tag.js`
- * не запрашивается до первого взаимодействия, а сразу пос�"е него запрашивается.
+ * Проверяет, что Яндекс Метрика ждёт посетителя: счётчик на странице есть, но `tag.js`
+ * не запрашивается до первого взаимодействия, а сразу после него запрашивается.
  *
- * Часы страницы подменены, чтобы запасной запуск через 4 с пос�"е `load` не сработа�"
- * на мед�"енной машине. До самого Яндекса запросы не доходят, им отвечаем пустотой.
+ * Часы страницы подменены, чтобы запасной запуск через 4 с после `load` не сработал
+ * на медленной машине. До самого Яндекса запросы не доходят, им отвечаем пустотой.
  *
  * @param {Page} page
  * @param {{ path?: string }} [options]
@@ -203,7 +203,7 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
 
 	expect(await page.evaluate(() => typeof window.ym), `${path} has no Metrika counter`).toBe('function')
 
-	// Меньше 4 с, пос�"е которых `site/metrika.js` грузит `tag.js` и без взаимодействия.
+	// Меньше 4 с, после которых `site/metrika.js` грузит `tag.js` и без взаимодействия.
 	await page.clock.runFor(3_000)
 	expect(loads, 'tag.js loaded before any interaction').toEqual([])
 
@@ -215,8 +215,8 @@ export async function expectMetrikaDeferred(page, { path = '/' } = {}) {
 const MISSING = '/kit-404-probe'
 
 /**
- * Открывает несуществующий адрес и проверяет общую 404: ответ 404, `noindex`, ссы�"ка
- * на г�"авную, кнопка ""Назад"" д�"я пришедших с сайта и никаких ошибок в консо�"и, кроме
+ * Открывает несуществующий адрес и проверяет общую 404: ответ 404, `noindex`, ссылка
+ * на главную, кнопка "Назад" для пришедших с сайта и никаких ошибок в консоли, кроме
  * самого ответа 404.
  *
  * @param {Page} page
@@ -227,7 +227,7 @@ export async function expectNotFound(page, { path = MISSING, home = '/', ignore 
 	const onConsole = (message) => {
 		if (message.type() !== 'error' || ignore.some((re) => re.test(message.text()))) return
 
-		// Chromium пишет в консо�"ь сам ответ 404 документа, это и проверяем.
+		// Chromium пишет в консоль сам ответ 404 документа, это и проверяем.
 		if (new URL(message.location().url || 'about:blank', page.url()).pathname === path) return
 
 		errors.push(message.text())
@@ -251,7 +251,7 @@ export async function expectNotFound(page, { path = MISSING, home = '/', ignore 
 		if (await back.count()) {
 			await expect(back, 'Back is shown without a page to go back to').toBeHidden()
 
-			// Переход скриптом, а не `goto`, чтобы у 404 бы�" referrer с этого же сайта.
+			// Переход скриптом, а не `goto`, чтобы у 404 был referrer с этого же сайта.
 			await page.goto(home)
 			await page.evaluate((target) => location.assign(target), path)
 			await page.waitForURL((url) => url.pathname === path)
@@ -274,7 +274,7 @@ export async function expectNotFound(page, { path = MISSING, home = '/', ignore 
  * @param {{ index?: string }} [options]
  */
 export async function expectNotFoundSuggests(page, request, { index } = {}) {
-	// Самый д�"инный путь: у короткого опечатка может попасть в другую страницу.
+	// Самый длинный путь: у короткого опечатка может попасть в другую страницу.
 	const target = (await sitemapPaths(request, index))
 		.filter((path) => path !== '/')
 		.sort((a, b) => b.length - a.length)[0]
@@ -292,18 +292,18 @@ export async function expectNotFoundSuggests(page, request, { index } = {}) {
 }
 
 /**
- * Регистрирует общие проверки как тесты текущего фай�"а.
+ * Регистрирует общие проверки как тесты текущего файла.
  *
  * @param {object} [options]
- * @param {boolean} [options.pages] Каждая страница из sitemap отвечает 200 без ошибок в консо�"и.
- * @param {RegExp[]} [options.ignoreConsole] Ошибки консо�"и, которые страницам можно писать.
+ * @param {boolean} [options.pages] Каждая страница из sitemap отвечает 200 без ошибок в консоли.
+ * @param {RegExp[]} [options.ignoreConsole] Ошибки консоли, которые страницам можно писать.
  * @param {false | { disableRules?: string[], exclude?: string[] }} [options.a11y] axe по каждой
- * странице из sitemap в обеих схемах, `false` вык�"ючает проверку.
+ * странице из sitemap в обеих схемах, `false` выключает проверку.
  * @param {{ button: (page: Page) => Locator, path?: string, persist?: boolean, peek?: boolean }} [options.theme]
  * Кнопка темы, без неё тема не проверяется.
  * @param {boolean | { path?: string }} [options.metrika] Страница со счётчиком Метрики.
  * @param {boolean | { path?: string, home?: string, suggest?: boolean }} [options.notFound]
- * Общая 404 из not-found.astro, `suggest: false` -- д�"я сайта без подсказок.
+ * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок.
  */
 export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme, metrika, notFound } = {}) {
 	test.describe('site', () => {
