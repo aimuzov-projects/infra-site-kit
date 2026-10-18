@@ -5,16 +5,17 @@ import { join } from 'node:path'
 import { metrikaScript } from '../../site/metrika.js'
 
 // Двухстраничный сайт для e2e-проверок кита: sitemap с продовым доменом, кнопка темы
-// на `theme.js` и `theme-peek.js` и ленивая Метрика. Всё как у сайтов после сборки.
+// на `theme.js` и `theme-peek.js`, ленивая Метрика и 404 на `not-found.js`. Всё как
+// у сайтов после сборки.
 
 const root = join(import.meta.dirname, '../..')
 const port = Number(process.env.E2E_PORT ?? 4399)
 const domain = 'https://example.com'
 
-const page = (title, body) => `<!doctype html>
+const page = (title, body, head = '') => `<!doctype html>
 <html lang="en">
 	<head>
-		<meta charset="utf-8" />
+		<meta charset="utf-8" />${head}
 		<title>${title}</title>
 		<link rel="stylesheet" href="/site/theme-peek.css" />
 		<style>
@@ -47,6 +48,26 @@ const page = (title, body) => `<!doctype html>
 
 const sitemap = (tag, locs) =>
 	`<?xml version="1.0" encoding="UTF-8"?><${tag} xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${locs.join('')}</${tag}>`
+
+// Та же разметка, что рисует not-found.astro: Astro в этом сервере нет.
+const missing = page(
+	'Not found',
+	`<div data-not-found data-sitemap="/sitemap-index.xml">
+		<p>Такой страницы нет</p>
+		<a href="/">На главную</a>
+		<button type="button" data-not-found-back hidden>Назад</button>
+		<nav aria-label="Возможно, вы искали" data-not-found-suggest hidden>
+			<p>Возможно, вы искали</p>
+			<ul data-not-found-list></ul>
+		</nav>
+	</div>
+	<script type="module">
+		import { notFound } from '/site/not-found.js'
+
+		notFound(document.querySelector('[data-not-found]'))
+	</script>`,
+	'\n\t\t<meta name="robots" content="noindex" />',
+)
 
 const routes = {
 	'/': ['text/html', page('Home', '<p>The home page.</p>')],
@@ -85,5 +106,5 @@ createServer((request, response) => {
 		}
 	}
 
-	response.writeHead(404).end()
+	response.writeHead(404, { 'content-type': 'text/html' }).end(missing)
 }).listen(port)

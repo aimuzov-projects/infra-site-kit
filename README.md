@@ -30,6 +30,7 @@ Shared CI, linter and e2e configs for the aimuzov-projects sites built from [inf
 - [**Theme**](#theme): the theme switch logic and the script that applies the choice before the first paint.
 - [**Theme peek**](#theme-peek): a theme button that shows the other scheme in a circle around itself.
 - [**Yandex Metrika**](#yandex-metrika) that loads after the first interaction and brings its own CSP sources.
+- [**Not-found page**](#not-found-page) with the author's face and suggestions from the sitemap.
 - [**E2E tests**](#e2e-tests): the Playwright preset and the checks every site shares.
 - [**Renovate**](#renovate): the update preset of the sites.
 
@@ -214,6 +215,34 @@ import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 
 The site's `security.csp` keeps no Yandex sources: the component brings them only to pages that have it.
 
+## Not-found page
+
+The 404 every site shares: a big "4 [face] 4" with the author's face in place of the zero (it wiggles its mustache, like in the credit), a heading, a line of text, "На главную" and "Назад", and "Возможно, вы искали" with the pages closest to the missing address.
+
+- The suggestions come from the sitemap: a typo in the address (`/extra` → `/extras`, case, the trailing slash and `.html` don't count) or the nearest parent page (`/blog/post/old` → `/blog/post/`). Until they load, or when nothing fits, the block stays hidden.
+- "Назад" shows only when the visitor came from the same site, otherwise it would take them away from it.
+- The site keeps its own wrapper: `Base` with `index={false}`, the header, the footer and the height of `<main>`.
+
+```astro
+---
+import NotFound from '@aimuzov-projects/infra-site-kit/not-found.astro'
+import Base from '#frontend/layouts/base.astro'
+---
+
+<Base title="Страница не найдена" index={false}>
+	<main class="missing">
+		<NotFound>
+			<a slot="actions" class="not-found__action" href="/#contacts">Контакты</a>
+		</NotFound>
+	</main>
+</Base>
+```
+
+- Props: `title`, `text`, `home={{ href, label }}`, `back` (`false` drops the button), `suggest` (`false` drops the suggestions and the sitemap request), `sitemap` (the index path, `/sitemap-index.xml` by default). The defaults are in Russian.
+- The default slot goes under the text (a second language, a contact line); the `actions` slot goes after the buttons, and the `not-found__action` class gives a link the same look.
+- The site theme comes through custom properties: `--not-found-accent` (the face, the main button and the links; `currentColor` by default), `--not-found-muted`, `--not-found-radius`, `--not-found-gap`. The font and the background are inherited.
+- `not-found.js` is the same logic without markup: `suggestPaths(path, paths)`, `canGoBack()` and `notFound(root)`; `sitemap.js` reads the sitemap in the browser, `mark.js` is the face path.
+
 ## E2E tests
 
 The Playwright preset and the checks every site shares. Unit tests stay on `node --test`; Playwright is for what needs a real browser: the built pages, the CSP, the theme and the counter.
@@ -248,8 +277,9 @@ siteChecks({
 - axe checks every sitemap page against WCAG 2.1 AA in both schemes. `a11y: { disableRules, exclude }` narrows it, `a11y: false` turns it off.
 - With `theme`: clicking the button changes the root `color-scheme` and the choice survives a reload (`persist: false` when it should not), and hovering it opens the theme peek, which a click puts out (`peek: false` for a button without one).
 - With `metrika`: the page has the counter, but `tag.js` is not requested before the first interaction. Yandex itself is never reached.
+- With `notFound`: a missing address answers 404 with `noindex`, a link home and a working "Назад", passes axe in both schemes, and a typo in a sitemap address is suggested (`suggest: false` for a site without suggestions). `path` and `home` move the probe and the home link.
 
-The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `sitemapPaths`) for a site's own tests.
+The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) for a site's own tests.
 
 In CI the job of `.github/workflows/check.yml` runs them after the `check` action, with the browser cached by the Playwright version, see [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 

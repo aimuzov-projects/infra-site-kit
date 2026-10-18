@@ -30,6 +30,7 @@
 - [**Тема**](#тема): логика переключателя темы и скрипт, который ставит выбор до отрисовки.
 - [**Подсмотреть тему**](#подсмотреть-тему): кнопка темы, которая показывает другую схему в круге вокруг себя.
 - [**Яндекс Метрика**](#яндекс-метрика), которая грузится после первого взаимодействия и сама добавляет свои источники в CSP.
+- [**Страница 404**](#страница-404) с лицом автора и подсказками из sitemap.
 - [**E2E-тесты**](#e2e-тесты): пресет Playwright и проверки, общие для всех сайтов.
 - [**Renovate**](#renovate): пресет обновлений для сайтов.
 
@@ -214,6 +215,34 @@ import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 
 В `security.csp` сайта источников Яндекса нет: компонент приносит их только на страницы, где он стоит.
 
+## Страница 404
+
+Общая 404 для всех сайтов: крупное «4 [лицо] 4» с лицом автора вместо нуля (шевелит усами, как в строке автора), заголовок, строка текста, «На главную» и «Назад», а ещё «Возможно, вы искали» со страницами, ближе всего похожими на ненайденный адрес.
+
+- Подсказки берутся из sitemap: опечатка в адресе (`/extra` → `/extras`, регистр, хвостовой слеш и `.html` не в счёт) или ближайшая родительская страница (`/blog/post/old` → `/blog/post/`). Пока они не загрузились или ничего не подошло, блока не видно.
+- «Назад» появляется, только если человек пришёл с этого же сайта, иначе кнопка увела бы его с сайта.
+- Обёртка остаётся за сайтом: `Base` с `index={false}`, шапка, подвал и высота `<main>`.
+
+```astro
+---
+import NotFound from '@aimuzov-projects/infra-site-kit/not-found.astro'
+import Base from '#frontend/layouts/base.astro'
+---
+
+<Base title="Страница не найдена" index={false}>
+	<main class="missing">
+		<NotFound>
+			<a slot="actions" class="not-found__action" href="/#contacts">Контакты</a>
+		</NotFound>
+	</main>
+</Base>
+```
+
+- Пропсы: `title`, `text`, `home={{ href, label }}`, `back` (`false` убирает кнопку), `suggest` (`false` убирает подсказки и запрос sitemap), `sitemap` (путь индекса, по умолчанию `/sitemap-index.xml`). Тексты по умолчанию русские.
+- Слот по умолчанию встаёт под текстом (второй язык, строка про контакты), слот `actions` — после кнопок, и класс `not-found__action` даёт ссылке тот же вид.
+- Тема сайта приходит CSS-переменными: `--not-found-accent` (лицо, главная кнопка и ссылки, по умолчанию `currentColor`), `--not-found-muted`, `--not-found-radius`, `--not-found-gap`. Шрифт и фон наследуются.
+- `not-found.js` — та же логика без разметки: `suggestPaths(path, paths)`, `canGoBack()` и `notFound(root)`; `sitemap.js` читает sitemap в браузере, `mark.js` — путь лица.
+
 ## E2E-тесты
 
 Пресет Playwright и проверки, общие для всех сайтов. Unit-тесты остаются на `node --test`, Playwright — для того, чему нужен настоящий браузер: собранных страниц, CSP, темы и счётчика.
@@ -248,8 +277,9 @@ siteChecks({
 - axe проверяет каждую страницу из sitemap по WCAG 2.1 AA в обеих схемах. `a11y: { disableRules, exclude }` сужает проверку, `a11y: false` выключает.
 - С `theme`: клик по кнопке меняет `color-scheme` корня, и выбор переживает перезагрузку (`persist: false`, если не должен), а наведение открывает круг с другой темой, который клик гасит (`peek: false` для кнопки без него).
 - С `metrika`: счётчик на странице есть, но `tag.js` не запрашивается до первого действия. До самого Яндекса запросы не доходят.
+- С `notFound`: несуществующий адрес отвечает 404 с `noindex`, ссылкой на главную и рабочей «Назад», проходит axe в обеих схемах, а опечатка в адресе из sitemap попадает в подсказки (`suggest: false` для сайта без подсказок). `path` и `home` меняют проверочный адрес и ссылку на главную.
 
-Те же проверки экспортируются по отдельности (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `sitemapPaths`) для собственных тестов сайта.
+Те же проверки экспортируются по отдельности (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) для собственных тестов сайта.
 
 В CI их запускает job из `.github/workflows/check.yml` после action `check`, браузер кэшируется по версии Playwright, см. [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 
