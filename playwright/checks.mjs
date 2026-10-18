@@ -240,7 +240,8 @@ export async function expectNotFound(page, { path = MISSING, home = '/', ignore 
 
 		expect(response?.status(), `${path} status`).toBe(404)
 
-		const root = page.locator('[data-not-found]')
+		// theme-peek кладёт в конец страницы её копию, вместе со второй 404: берём настоящую.
+		const root = page.locator('[data-not-found]').first()
 
 		await expect(root, `${path} has no not-found.astro`).toBeVisible()
 		await expect(page.locator('meta[name="robots"]'), `${path} is indexed`).toHaveAttribute('content', /noindex/)
@@ -289,7 +290,7 @@ export async function expectNotFoundSuggests(page, request, { index, exclude = [
 	await page.goto(typo)
 
 	await expect(
-		page.locator(`[data-not-found-suggest] a[href="${target}"]`),
+		page.locator(`[data-not-found-suggest] a[href="${target}"]`).first(),
 		`${typo} does not suggest ${target}`,
 	).toBeVisible()
 }
