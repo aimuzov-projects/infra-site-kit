@@ -1,0 +1,15 @@
+---
+// Тема до отрисовки. Файлом, а не инлайн-скриптом: Astro не хеширует `is:inline` скрипты
+// для своей CSP, а файл с того же origin проходит по 'self'. Ставится в <head>.
+// `no-inline`: маленький файл Vite иначе вклеит адресом data:, а его CSP не пускает.
+import boot from './theme-boot.js?url&no-inline'
+
+type Props = {
+	/** Ключ выбора в localStorage, тот же, что у `applyTheme`. По умолчанию `theme`. */
+	key?: string
+}
+
+const { key } = Astro.props
+---
+
+<script is:inline src={boot} data-key={key}></script>

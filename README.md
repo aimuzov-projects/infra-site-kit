@@ -27,6 +27,7 @@ Shared CI, linter and e2e configs for the aimuzov-projects sites built from [inf
 - [**Actions**](#actions) `check`, `release` and `deploy`: the steps of the site workflows, from `npm ci` to the deploy over SSH.
 - [**Configs**](#configs) of Prettier, Stylelint (BEM included) and oxlint, with their plugins.
 - [**Author credit**](#author-credit): the shared footer line for Astro and Svelte.
+- [**Theme**](#theme): the theme switch logic and the script that applies the choice before the first paint.
 - [**Theme peek**](#theme-peek): a theme button that shows the other scheme in a circle around itself.
 - [**Yandex Metrika**](#yandex-metrika) that loads after the first interaction and brings its own CSP sources.
 - [**E2E tests**](#e2e-tests): the Playwright preset and the checks every site shares.
@@ -135,6 +136,42 @@ With a mouse only the face peeks out at first, and the line slides up from below
 
 `copyright={false}` drops the year when the site has its own © line. `--credit-hover` sets the link hover color; everything else is inherited from the footer.
 
+## Theme
+
+The theme switch logic without markup; the site draws the button and the labels. The choice lives on `<html data-theme="light|dark">` and in localStorage; without the attribute `prefers-color-scheme` leads, so the site CSS sets `color-scheme` by the attribute and `light dark` without it.
+
+A click always flips the visible scheme, just like the [peek](#theme-peek) circle. When the new scheme matches the system one, the choice is forgotten and the site follows the system again.
+
+`theme-boot.astro` in `<head>` applies the choice before the first paint, so the page does not flash the system theme. It is a same-origin file rather than an inline script, so the Astro CSP lets it through by `'self'` without hashes. `key` is the localStorage key, `theme` by default.
+
+```astro
+---
+import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
+---
+
+<head>
+	<ThemeBoot key="site:theme" />
+</head>
+```
+
+```svelte
+<script>
+	import { toggleTheme, watchTheme } from '@aimuzov-projects/infra-site-kit/theme.js'
+
+	let theme = $state('auto')
+
+	$effect(() => watchTheme((next) => (theme = next)))
+</script>
+
+<button onclick={() => toggleTheme({ key: 'site:theme' })}>…</button>
+```
+
+- `toggleTheme(options)`: a click; flips the scheme and returns the new theme.
+- `applyTheme(theme, options)`: set `auto`, `light` or `dark` directly, say from a menu with a button per theme.
+- `nextTheme(theme, system)`: the theme a click will give, for the button label before the click.
+- `currentTheme()`, `systemScheme()`, `schemeOf(theme, system)`: what is chosen, what the system has and what is visible.
+- `watchTheme(callback)`: watches both the system and the attribute, so a second switch on the page hears about the click too. Calls back right away; returns the unsubscribe.
+
 ## Theme peek
 
 A theme button that shows what it switches to. The closer the pointer gets to the button, the wider a faint circle grows around it; on hover the circle opens to a third of the screen, and inside it the page is drawn in the other scheme. A click puts the circle out until the next hover. Touch screens and reduced motion get no circle.
@@ -235,7 +272,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-- Unit tests (`node --test`) run the configs against [`test/site`](test/site), which takes them by the package name the way a site does, and cover the credit year, the Metrika snippet and the theme peek math.
+- Unit tests (`node --test`) run the configs against [`test/site`](test/site), which takes them by the package name the way a site does, and cover the credit year, the Metrika snippet, the theme peek math, the theme switch and the boot script.
 - The kit has no Astro site, so e2e runs the shared checks against a two-page stand-in from [`test/e2e/server.mjs`](test/e2e/server.mjs): a sitemap with the production domain, a theme button with the peek and the deferred Metrika.
 
 ## Versions
