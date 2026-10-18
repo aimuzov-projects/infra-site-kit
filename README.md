@@ -192,6 +192,8 @@ The copy takes the place of `<body>`, so the site adds `.theme-peek` to its body
 
 By default the circle shows the scheme opposite to the current one. A switch with a button per theme passes its own: `{@attach (node) => themePeek(node, { target: () => 'dark' })}`. When the target matches the current scheme there is nothing to show and the circle stays hidden. Of several buttons side by side, only the one nearest the pointer draws the circle, and a click on any of them puts it out for all.
 
+A button with other controls right next to it passes `{ approach: false }`: the faint circle no longer grows as the pointer nears, so hovering a neighbour leaves the page alone, and the circle opens only on hover of the button itself.
+
 ## Yandex Metrika
 
 The counter loads `tag.js` on the first interaction or 4 s after `load`, so the ~85 KB script doesn't steal bandwidth from fonts and the first photo; earlier `ym` calls wait in a queue. Webvisor is off: on mobile it raises LCP.
