@@ -140,6 +140,11 @@ const {
 				border-color 0.2s,
 				background-color 0.2s;
 
+			/* `display` выше перебил бы `hidden`, а "Назад" прячется именно им. */
+			&[hidden] {
+				display: none;
+			}
+
 			&:hover {
 				border-color: currentColor;
 			}
