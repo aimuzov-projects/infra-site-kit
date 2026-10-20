@@ -1,5 +1,5 @@
-/** Запись ченжлога для читателя. */
-export type Release = {
+/** Запись ченжлога, которую видит читатель. */
+export type VisibleRelease = {
 	version: string
 	/** `YYYY-MM-DD`, как в CHANGELOG.md. */
 	date: string
@@ -8,9 +8,20 @@ export type Release = {
 	icon?: string
 	/** Пункты; ссылка внутри -- `[текст](/путь/)`. */
 	items: string[]
-	/** Релиз без заметных читателю изменений: на странице не показывается. */
-	hidden?: boolean
+	hidden?: false
 }
+
+/**
+ * Релиз без заметных читателю изменений: на странице не показывается. `boolean`, а не `true`:
+ * импорт JSON расширяет литерал. Запись с `false` и без полей ловит уже `releaseErrors`.
+ */
+export type HiddenRelease = {
+	version: string
+	hidden: boolean
+}
+
+/** Запись ченжлога для читателя: видимая или скрытая. */
+export type Release = VisibleRelease | HiddenRelease
 
 /** Пункт в HTML: текст экранирован, ссылки `[текст](/путь/)` становятся `<a>`. */
 export function itemHtml(item: string): string
@@ -25,7 +36,7 @@ export function releaseDate(date: string, locale?: string): string
 export function releaseId(version: string): string
 
 /** Записи без скрытых. */
-export function visibleReleases<T extends { hidden?: boolean }>(releases: T[]): T[]
+export function visibleReleases<T extends { hidden?: boolean }>(releases: T[]): Exclude<T, { hidden: boolean }>[]
 
 /** Ошибки формата записей; пустой массив -- всё в порядке. */
 export function releaseErrors(releases: unknown, options?: { icons?: string[] }): string[]
