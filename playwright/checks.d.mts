@@ -104,6 +104,9 @@ export function siteChecks(options?: {
 	metrika?: boolean | { path?: string }
 	/** Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента. */
 	notFound?: boolean | { path?: string; home?: string; suggest?: boolean; exclude?: string[] }
-	/** Полоса прокрутки не меняет ширину страниц из sitemap (`scrollbar.css`), по умолчанию `true`. */
-	gutter?: boolean
+	/**
+	 * Полоса прокрутки не меняет ширину страниц из sitemap (`scrollbar.css`), по умолчанию `true`.
+	 * `paths` -- для сайта без sitemap: проверяются они, а sitemap не читается.
+	 */
+	gutter?: boolean | { paths?: string[] }
 }): void

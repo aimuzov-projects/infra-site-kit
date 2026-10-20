@@ -340,7 +340,8 @@ export async function expectStableWidth(page, paths) {
  * @param {boolean | { path?: string }} [options.metrika] Страница со счётчиком Метрики.
  * @param {boolean | { path?: string, home?: string, suggest?: boolean, exclude?: string[] }} [options.notFound]
  * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента.
- * @param {boolean} [options.gutter] Полоса прокрутки не меняет ширину страниц из sitemap, по умолчанию `true`.
+ * @param {boolean | { paths?: string[] }} [options.gutter] Полоса прокрутки не меняет ширину страниц из sitemap,
+ * по умолчанию `true`. `paths` -- для сайта без sitemap: проверяются они, а sitemap не читается.
  */
 export function siteChecks({
 	pages = true,
@@ -376,7 +377,9 @@ export function siteChecks({
 		}
 
 		if (gutter) {
-			test('every sitemap page keeps its width with or without a scrollbar', async ({
+			const { paths: listed } = gutter === true ? {} : gutter
+
+			test(`every ${listed ? '' : 'sitemap '}page keeps its width with or without a scrollbar`, async ({
 				playwright,
 				browserName,
 				request,
@@ -389,7 +392,7 @@ export function siteChecks({
 
 				try {
 					const page = await browser.newPage({ baseURL, viewport })
-					const paths = await sitemapPaths(request)
+					const paths = listed ? [...listed] : await sitemapPaths(request)
 
 					if (notFound) paths.push((notFound === true ? {} : notFound).path ?? MISSING)
 

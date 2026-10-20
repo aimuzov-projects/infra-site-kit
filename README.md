@@ -320,7 +320,7 @@ siteChecks({
 - Every page of `sitemap-index.xml` answers 200 and logs no errors to the console: exceptions, failed requests and CSP violations included. `ignoreConsole` lets known messages through.
 - axe checks every sitemap page against WCAG 2.1 AA in both schemes. `a11y: { disableRules, exclude }` narrows it, `a11y: false` turns it off.
 - With `theme`: clicking the button changes the root `color-scheme` and the choice survives a reload (`persist: false` when it should not), and hovering it opens the theme peek, which a click puts out (`peek: false` for a button without one).
-- Every sitemap page reserves the scrollbar gutter and all of them are equally wide, whether they scroll or not (see [Scrollbar gutter](#scrollbar-gutter)). Headless Chromium hides scrollbars, so the check launches its own browser with the classic ones. `gutter: false` turns it off.
+- Every sitemap page reserves the scrollbar gutter and all of them are equally wide, whether they scroll or not (see [Scrollbar gutter](#scrollbar-gutter)). Headless Chromium hides scrollbars, so the check launches its own browser with the classic ones. A site without a sitemap lists its pages in `gutter: { paths }`, and `gutter: false` turns the check off.
 - With `metrika`: the page has the counter, but `tag.js` is not requested before the first interaction. Yandex itself is never reached.
 - With `notFound`: a missing address answers 404 with `noindex`, a link home and a working "Назад", passes axe in both schemes, and a typo in a sitemap address is suggested (`suggest: false` for a site without suggestions, `exclude` as on the component). `path` and `home` move the probe and the home link.
 

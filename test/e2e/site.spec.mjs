@@ -18,6 +18,11 @@ siteChecks({
 	notFound: true,
 })
 
+// Сайт без sitemap перечисляет страницы для проверки ширины сам.
+test.describe('without a sitemap', () => {
+	siteChecks({ pages: false, a11y: false, gutter: { paths: ['/', '/about/'] } })
+})
+
 test('the sitemap paths drop the production domain', async ({ request }) => {
 	expect(await sitemapPaths(request)).toEqual(['/', '/about/'])
 })
