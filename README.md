@@ -29,6 +29,7 @@ Shared CI, linter and e2e configs for the aimuzov-projects sites built from [inf
 - [**Author credit**](#author-credit): the shared footer line for Astro and Svelte.
 - [**Theme**](#theme): the theme switch logic and the script that applies the choice before the first paint.
 - [**Theme peek**](#theme-peek): a theme button that shows the other scheme in a circle around itself.
+- [**Scrollbar gutter**](#scrollbar-gutter): pages keep one width whether they scroll or not.
 - [**Yandex Metrika**](#yandex-metrika) that loads after the first interaction and brings its own CSP sources.
 - [**Not-found page**](#not-found-page) with the author's face and suggestions from the sitemap.
 - [**E2E tests**](#e2e-tests): the Playwright preset and the checks every site shares.
@@ -194,6 +195,18 @@ By default the circle shows the scheme opposite to the current one. A switch wit
 
 A button with other controls right next to it passes `{ approach: false }`: the faint circle no longer grows as the pointer nears, so hovering a neighbour leaves the page alone, and the circle opens only on hover of the button itself.
 
+## Scrollbar gutter
+
+A page that scrolls is narrower than one that does not by the width of the window scrollbar, so on the way between them the header and everything pinned to the right edge jump sideways. `scrollbar.css` reserves the gutter on the root on every page (`scrollbar-gutter: stable`); with scrollbars drawn over the content (macOS, phones) it changes nothing.
+
+```astro
+---
+import '@aimuzov-projects/infra-site-kit/scrollbar.css'
+---
+```
+
+The site imports it once, in the base layout. Layers with `position: fixed` are laid out by the window and reach under the gutter, so a site that lines one up with the page measures `document.body`, not `innerWidth`.
+
 ## Yandex Metrika
 
 The counter loads `tag.js` on the first interaction or 4 s after `load`, so the ~85 KB script doesn't steal bandwidth from fonts and the first photo; earlier `ym` calls wait in a queue. Webvisor is off: on mobile it raises LCP.
@@ -278,10 +291,11 @@ siteChecks({
 - Every page of `sitemap-index.xml` answers 200 and logs no errors to the console: exceptions, failed requests and CSP violations included. `ignoreConsole` lets known messages through.
 - axe checks every sitemap page against WCAG 2.1 AA in both schemes. `a11y: { disableRules, exclude }` narrows it, `a11y: false` turns it off.
 - With `theme`: clicking the button changes the root `color-scheme` and the choice survives a reload (`persist: false` when it should not), and hovering it opens the theme peek, which a click puts out (`peek: false` for a button without one).
+- Every sitemap page reserves the scrollbar gutter and all of them are equally wide, whether they scroll or not (see [Scrollbar gutter](#scrollbar-gutter)). Headless Chromium hides scrollbars, so the check launches its own browser with the classic ones. `gutter: false` turns it off.
 - With `metrika`: the page has the counter, but `tag.js` is not requested before the first interaction. Yandex itself is never reached.
 - With `notFound`: a missing address answers 404 with `noindex`, a link home and a working "Назад", passes axe in both schemes, and a typo in a sitemap address is suggested (`suggest: false` for a site without suggestions, `exclude` as on the component). `path` and `home` move the probe and the home link.
 
-The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) for a site's own tests.
+The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) for a site's own tests.
 
 In CI the job of `.github/workflows/check.yml` runs them after the `check` action, with the browser cached by the Playwright version, see [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 

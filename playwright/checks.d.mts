@@ -78,6 +78,13 @@ export function expectNotFoundSuggests(
 	options?: { index?: string; exclude?: string[] },
 ): Promise<void>
 
+/**
+ * Корень держит место под полосу прокрутки окна, и ширина у всех путей одна.
+ *
+ * Ширина сравнивается только при обычных полосах: `page` нужна из браузера без `--hide-scrollbars`.
+ */
+export function expectStableWidth(page: Page, paths: string[]): Promise<void>
+
 /** Регистрирует общие проверки как тесты текущего файла. */
 export function siteChecks(options?: {
 	/** Каждая страница из sitemap отвечает 200 без ошибок в консоли, по умолчанию `true`. */
@@ -97,4 +104,6 @@ export function siteChecks(options?: {
 	metrika?: boolean | { path?: string }
 	/** Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента. */
 	notFound?: boolean | { path?: string; home?: string; suggest?: boolean; exclude?: string[] }
+	/** Полоса прокрутки не меняет ширину страниц из sitemap (`scrollbar.css`), по умолчанию `true`. */
+	gutter?: boolean
 }): void

@@ -5,6 +5,7 @@ import {
 	expectHealthyPage,
 	expectMetrikaDeferred,
 	expectNotFound,
+	expectStableWidth,
 	expectThemePeek,
 	sitemapPaths,
 	siteChecks,
@@ -42,6 +43,11 @@ test.fail('a button without a name fails axe', async ({ page }) => {
 	await serve(page, '<html lang="en"><title>x</title><main><button></button></main></html>')
 	await page.goto('/about/')
 	await expectAccessible(page)
+})
+
+test.fail('a page without the scrollbar gutter fails the width check', async ({ page }) => {
+	await serve(page, '<html lang="en"><title>x</title><p style="min-height: 200vh">x</p></html>')
+	await expectStableWidth(page, ['/', '/about/'])
 })
 
 test.fail('a theme button without the peek fails its check', async ({ page }) => {
