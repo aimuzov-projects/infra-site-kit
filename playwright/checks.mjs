@@ -297,7 +297,7 @@ export async function expectNotFoundSuggests(page, request, { index, exclude = [
 
 /**
  * Проверяет, что полоса прокрутки окна не меняет ширину страниц: корень держит под неё
- * место (`scrollbar-gutter: stable` из `scrollbar.css`), и у всех путей ширина одна,
+ * место (`scrollbar-gutter: stable` из `base.css`), и у всех путей ширина одна,
  * есть там прокрутка или нет.
  *
  * Ширину сравнивает только при обычных полосах, как в Windows. Headless Chromium их прячет,
@@ -328,6 +328,23 @@ export async function expectStableWidth(page, paths) {
 }
 
 /**
+ * Проверяет, что браузер не подсвечивает касание на страницах: у `body` прозрачный
+ * `-webkit-tap-highlight-color` из `base.css`. Свойство наследуется, поэтому
+ * хватает его значения на `body`, где бы сайт его ни задал.
+ *
+ * @param {Page} page
+ * @param {string[]} paths
+ */
+export async function expectNoTapHighlight(page, paths) {
+	for (const path of paths) {
+		await page.goto(path)
+		const color = await page.evaluate(() => getComputedStyle(document.body).webkitTapHighlightColor)
+
+		expect.soft(color, `${path} keeps the tap highlight`).toBe('rgba(0, 0, 0, 0)')
+	}
+}
+
+/**
  * Регистрирует общие проверки как тесты текущего файла.
  *
  * @param {object} [options]
@@ -342,6 +359,8 @@ export async function expectStableWidth(page, paths) {
  * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента.
  * @param {boolean | { paths?: string[] }} [options.gutter] Полоса прокрутки не меняет ширину страниц из sitemap,
  * по умолчанию `true`. `paths` -- для сайта без sitemap: проверяются они, а sitemap не читается.
+ * @param {boolean | { paths?: string[] }} [options.tapHighlight] Касание на страницах из sitemap
+ * не подсвечивается, по умолчанию `true`. `paths` -- как у `gutter`.
  */
 export function siteChecks({
 	pages = true,
@@ -351,6 +370,7 @@ export function siteChecks({
 	metrika,
 	notFound,
 	gutter = true,
+	tapHighlight = true,
 } = {}) {
 	test.describe('site', () => {
 		if (pages) {
@@ -401,6 +421,13 @@ export function siteChecks({
 					await browser.close()
 				}
 			})
+		}
+
+		if (tapHighlight) {
+			const { paths: listed } = tapHighlight === true ? {} : tapHighlight
+
+			test(`every ${listed ? '' : 'sitemap '}page turns the tap highlight off`, async ({ page, request }) =>
+				expectNoTapHighlight(page, listed ?? (await sitemapPaths(request))))
 		}
 
 		if (theme) {
