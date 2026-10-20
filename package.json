@@ -1,6 +1,6 @@
 {
 	"name": "@aimuzov-projects/infra-site-kit",
-	"version": "1.14.0",
+	"version": "1.14.1",
 	"private": true,
 	"description": "Shared Prettier, Stylelint, oxlint and Playwright configs, the author credit, the not-found page, the theme switch and peek, the steady scrollbar gutter, Yandex Metrika and the reader changelog for the aimuzov-projects sites",
 	"license": "MIT",
