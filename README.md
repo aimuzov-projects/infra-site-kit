@@ -32,12 +32,13 @@ Shared CI, linter and e2e configs for the aimuzov-projects sites built from [inf
 - [**Scrollbar gutter**](#scrollbar-gutter): pages keep one width whether they scroll or not.
 - [**Yandex Metrika**](#yandex-metrika) that loads after the first interaction and brings its own CSP sources.
 - [**Not-found page**](#not-found-page) with the author's face and suggestions from the sitemap.
+- [**Reader changelog**](#reader-changelog): the "Что нового" page, its format and the release PR check.
 - [**E2E tests**](#e2e-tests): the Playwright preset and the checks every site shares.
 - [**Renovate**](#renovate): the update preset of the sites.
 
 ## Actions
 
-- [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test` and the build. Packages from Ubuntu go in `apt-packages`.
+- [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test`, the build and the reader changelog check. Packages from Ubuntu go in `apt-packages`.
 - [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) keeps the release PR up to date with the changelog from conventional commits; merging it cuts a tag and a GitHub release, the action then outputs `created` and `tag`. The release PR comes from `github-actions[bot]`, so GitHub holds its `pull_request` runs for approval; the action approves them, otherwise the required check would never come.
 - [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer. `ref` is the release tag to deploy, empty deploys the newest `main`. The server address and its `known_hosts` line live here.
 
@@ -257,6 +258,34 @@ import Base from '#frontend/layouts/base.astro'
 - The default slot goes under the text (a second language, a contact line); the `actions` slot goes after the buttons, and the `not-found__action` class gives a link the same look.
 - The site theme comes through custom properties: `--not-found-accent` (the face, the main button and the links; `currentColor` by default), `--not-found-muted`, `--not-found-radius`, `--not-found-gap`. The font and the background are inherited.
 - `not-found.js` is the same logic without markup: `suggestPaths(path, paths)`, `canGoBack()` and `notFound(root)`; `sitemap.js` reads the sitemap in the browser, `mark.js` is the face path.
+
+## Reader changelog
+
+The "Что нового" page: what changed on the site in the reader's words, next to the technical `CHANGELOG.md` of release-please. Each release gets an entry, and the release PR stays red until it does.
+
+- A site opts in with the `changelog` field of its `package.json`: `true` (the file is `src/frontend/data/changelog.json`), a path, or `{ "file", "guide", "icons" }`. `guide` is a Markdown file with the site's audience and voice (`changelog.guide.md` by default), `icons` are the names of the site's own icons next to the lucide-static ones.
+- An entry is `{ "version", "date", "title", "icon", "items" }`, newest first; a link inside an item is `[text](/path/)`. A release with nothing the reader would notice gets `{ "version", "hidden": true }`: it ships, the page skips it.
+- The `check` action runs `site-changelog verify` after the build: the format, an entry for the version in `package.json` (release-please bumps it in the release PR) and every link leading to a page in `dist`.
+- `site-changelog context` prints what an entry is written from: the guide, the `CHANGELOG.md` section, the PR descriptions (via `gh`), the diff since the last tag, the pages of the build and the recent entries. `site-changelog add entry.json` puts the entry on top, verifies the file and formats it with the site's Prettier.
+
+```astro
+---
+import Changelog from '@aimuzov-projects/infra-site-kit/changelog.astro'
+import * as lucide from 'lucide-static'
+import releases from '#frontend/data/changelog.json'
+import Base from '#frontend/layouts/base.astro'
+---
+
+<Base title="Что нового">
+	<main>
+		<Changelog {releases} icons={lucide} lead="Что изменилось, простыми словами." />
+	</main>
+</Base>
+```
+
+- Props: `releases`, `icons` (SVG by icon name), `title` (`false` when the site draws its own `<h1>`), `lead`, `toc` (the table of contents label, `false` drops it), `versionLabel`, `locale`. The `hero` slot goes under the lead.
+- The site theme comes through custom properties: `--changelog-accent`, `--changelog-muted`, `--changelog-width`, `--changelog-padding`, `--changelog-sticky-top`.
+- `changelog.js` is the same logic without markup, for a site with its own page: `itemHtml`, `releaseDate`, `releaseId`, `visibleReleases` and `releaseErrors`.
 
 ## E2E tests
 
