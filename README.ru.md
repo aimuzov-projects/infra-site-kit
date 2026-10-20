@@ -32,12 +32,13 @@
 - [**Полоса прокрутки**](#полоса-прокрутки): ширина страницы одна, есть на ней прокрутка или нет.
 - [**Яндекс Метрика**](#яндекс-метрика), которая грузится после первого взаимодействия и сама добавляет свои источники в CSP.
 - [**Страница 404**](#страница-404) с лицом автора и подсказками из sitemap.
+- [**Ченжлог для читателя**](#ченжлог-для-читателя): страница «Что нового», её формат и проверка релизного PR.
 - [**E2E-тесты**](#e2e-тесты): пресет Playwright и проверки, общие для всех сайтов.
 - [**Renovate**](#renovate): пресет обновлений для сайтов.
 
 ## Actions
 
-- [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test` и сборка. Пакеты из Ubuntu передаются в `apt-packages`.
+- [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test`, сборка и проверка ченжлога для читателя. Пакеты из Ubuntu передаются в `apt-packages`.
 - [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) держит релизный PR с changelog из conventional-коммитов; мерж этого PR создаёт тег и GitHub Release, а action отдаёт `created` и `tag`. Релизный PR открывает `github-actions[bot]`, поэтому GitHub придерживает его прогоны `pull_request` до одобрения; action их одобряет, иначе обязательный чек так и не придёт.
 - [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`. `ref` — тег релиза для выкладки, пустой выкладывает свежий `main`. Адрес сервера и его строка `known_hosts` живут здесь.
 
@@ -255,6 +256,34 @@ import Base from '#frontend/layouts/base.astro'
 - Слот по умолчанию встаёт под текстом (второй язык, строка про контакты), слот `actions` — после кнопок, и класс `not-found__action` даёт ссылке тот же вид.
 - Тема сайта приходит CSS-переменными: `--not-found-accent` (лицо, главная кнопка и ссылки, по умолчанию `currentColor`), `--not-found-muted`, `--not-found-radius`, `--not-found-gap`. Шрифт и фон наследуются.
 - `not-found.js` — та же логика без разметки: `suggestPaths(path, paths)`, `canGoBack()` и `notFound(root)`; `sitemap.js` читает sitemap в браузере, `mark.js` — путь лица.
+
+## Ченжлог для читателя
+
+Страница «Что нового»: что изменилось на сайте словами читателя, рядом с техническим `CHANGELOG.md` от release-please. У каждого релиза своя запись, и релизный PR остаётся красным, пока её нет.
+
+- Сайт включает ченжлог полем `changelog` в `package.json`: `true` (файл `src/frontend/data/changelog.json`), путь или `{ "file", "guide", "icons" }`. `guide` -- Markdown с аудиторией и голосом сайта (по умолчанию `changelog.guide.md`), `icons` -- имена своих иконок сайта рядом с lucide-static.
+- Запись -- `{ "version", "date", "title", "icon", "items" }`, новые сверху; ссылка внутри пункта -- `[текст](/путь/)`. Релиз, в котором читатель ничего не заметит, получает `{ "version", "hidden": true }`: он выкатывается, страница его пропускает.
+- Action `check` после сборки запускает `site-changelog verify`: формат, запись для версии из `package.json` (release-please поднимает её в релизном PR) и что каждая ссылка ведёт на страницу в `dist`.
+- `site-changelog context` печатает, из чего пишется запись: правила сайта, секцию `CHANGELOG.md`, описания PR (через `gh`), diff с прошлого тега, страницы сборки и последние записи. `site-changelog add entry.json` ставит запись в начало, проверяет файл и форматирует его Prettier сайта.
+
+```astro
+---
+import Changelog from '@aimuzov-projects/infra-site-kit/changelog.astro'
+import * as lucide from 'lucide-static'
+import releases from '#frontend/data/changelog.json'
+import Base from '#frontend/layouts/base.astro'
+---
+
+<Base title="Что нового">
+	<main>
+		<Changelog {releases} icons={lucide} lead="Что изменилось, простыми словами." />
+	</main>
+</Base>
+```
+
+- Props: `releases`, `icons` (SVG по имени иконки), `title` (`false`, если `<h1>` рисует сайт), `lead`, `toc` (подпись оглавления, `false` убирает его), `versionLabel`, `locale`. Слот `hero` идёт под абзацем.
+- Тема сайта приходит CSS-переменными: `--changelog-accent`, `--changelog-muted`, `--changelog-width`, `--changelog-padding`, `--changelog-sticky-top`.
+- `changelog.js` -- та же логика без разметки, для сайта со своей страницей: `itemHtml`, `releaseDate`, `releaseId`, `visibleReleases` и `releaseErrors`.
 
 ## E2E-тесты
 

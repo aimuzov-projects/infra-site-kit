@@ -1,5 +1,5 @@
 name: Site check
-description: Install dependencies, then run the formatter, linters, type check, tests and build of an Astro site.
+description: Install dependencies, then run the formatter, linters, type check, tests and build of an Astro site, and verify its reader changelog.
 
 inputs:
   apt-packages:
@@ -37,3 +37,8 @@ runs:
     # Сайт собирается на сервере, но лучше, чтобы сборка упала здесь.
     - shell: bash
       run: npm run build
+    # Ченжлог для читателя ведёт только сайт с полем `changelog` в package.json, остальным
+    # шаг ничего не делает. Нужна сборка: ссылки пунктов сверяются со страницами в dist.
+    # Скрипт берётся из этого же action, а не из node_modules сайта: там может быть старый кит.
+    - shell: bash
+      run: node "$GITHUB_ACTION_PATH/../bin/site-changelog.mjs" verify
