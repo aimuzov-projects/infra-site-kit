@@ -29,7 +29,7 @@ Shared CI, linter and e2e configs for the aimuzov-projects sites built from [inf
 - [**Author credit**](#author-credit): the shared footer line for Astro and Svelte.
 - [**Theme**](#theme): the theme switch logic and the script that applies the choice before the first paint.
 - [**Theme peek**](#theme-peek): a theme button that shows the other scheme in a circle around itself.
-- [**Scrollbar gutter**](#scrollbar-gutter): pages keep one width whether they scroll or not.
+- [**Base styles**](#base-styles): the root defaults, a steady scrollbar gutter and no tap highlight.
 - [**Yandex Metrika**](#yandex-metrika) that loads after the first interaction and brings its own CSP sources.
 - [**Not-found page**](#not-found-page) with the author's face and suggestions from the sitemap.
 - [**Reader changelog**](#reader-changelog): the "Что нового" page, its format and the release PR check.
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov-projects/infra-site-kit/check@v1
+      - uses: aimuzov-projects/infra-site-kit/check@v2
 ```
 
 `.github/workflows/deploy.yml`, a deploy by release:
@@ -74,7 +74,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
       - id: release
-        uses: aimuzov-projects/infra-site-kit/release@v1
+        uses: aimuzov-projects/infra-site-kit/release@v2
 
   check:
     needs: release
@@ -92,7 +92,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov-projects/infra-site-kit/deploy@v1
+      - uses: aimuzov-projects/infra-site-kit/deploy@v2
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
@@ -106,7 +106,7 @@ release-please reads `release-please-config.json` (`"release-type": "node"`, `"p
 The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.8.0
+npm install -D github:aimuzov-projects/infra-site-kit#v2.0.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -196,17 +196,20 @@ By default the circle shows the scheme opposite to the current one. A switch wit
 
 A button with other controls right next to it passes `{ approach: false }`: the faint circle no longer grows as the pointer nears, so hovering a neighbour leaves the page alone, and the circle opens only on hover of the button itself.
 
-## Scrollbar gutter
+## Base styles
 
-A page that scrolls is narrower than one that does not by the width of the window scrollbar, so on the way between them the header and everything pinned to the right edge jump sideways. `scrollbar.css` reserves the gutter on the root on every page (`scrollbar-gutter: stable`); with scrollbars drawn over the content (macOS, phones) it changes nothing.
+`base.css` holds the root defaults every site shares:
+
+- **Scrollbar gutter.** A page that scrolls is narrower than one that does not by the width of the window scrollbar, so on the way between them the header and everything pinned to the right edge jump sideways. The root reserves the gutter on every page (`scrollbar-gutter: stable`); with scrollbars drawn over the content (macOS, phones) it changes nothing. Layers with `position: fixed` are laid out by the window and reach under the gutter, so a site that lines one up with the page measures `document.body`, not `innerWidth`.
+- **No tap highlight.** On touch, WebKit fills the tapped link or button with a grey square box that follows neither the shape of the element nor the style of the site. The root turns it off (`-webkit-tap-highlight-color: transparent`); the property inherits, so buttons and links are left with their own feedback on press.
 
 ```astro
 ---
-import '@aimuzov-projects/infra-site-kit/scrollbar.css'
+import '@aimuzov-projects/infra-site-kit/base.css'
 ---
 ```
 
-The site imports it once, in the base layout. Layers with `position: fixed` are laid out by the window and reach under the gutter, so a site that lines one up with the page measures `document.body`, not `innerWidth`.
+The site imports it once, in the base layout. A new shared root rule lands here, so a site picks it up with the kit update alone.
 
 ## Yandex Metrika
 
@@ -320,11 +323,12 @@ siteChecks({
 - Every page of `sitemap-index.xml` answers 200 and logs no errors to the console: exceptions, failed requests and CSP violations included. `ignoreConsole` lets known messages through.
 - axe checks every sitemap page against WCAG 2.1 AA in both schemes. `a11y: { disableRules, exclude }` narrows it, `a11y: false` turns it off.
 - With `theme`: clicking the button changes the root `color-scheme` and the choice survives a reload (`persist: false` when it should not), and hovering it opens the theme peek, which a click puts out (`peek: false` for a button without one).
-- Every sitemap page reserves the scrollbar gutter and all of them are equally wide, whether they scroll or not (see [Scrollbar gutter](#scrollbar-gutter)). Headless Chromium hides scrollbars, so the check launches its own browser with the classic ones. A site without a sitemap lists its pages in `gutter: { paths }`, and `gutter: false` turns the check off.
+- Every sitemap page reserves the scrollbar gutter and all of them are equally wide, whether they scroll or not (see [Base styles](#base-styles)). Headless Chromium hides scrollbars, so the check launches its own browser with the classic ones. A site without a sitemap lists its pages in `gutter: { paths }`, and `gutter: false` turns the check off.
+- Every sitemap page turns the tap highlight off (see [Base styles](#base-styles)). `tapHighlight: { paths }` and `tapHighlight: false` work as with `gutter`.
 - With `metrika`: the page has the counter, but `tag.js` is not requested before the first interaction. Yandex itself is never reached.
 - With `notFound`: a missing address answers 404 with `noindex`, a link home and a working "Назад", passes axe in both schemes, and a typo in a sitemap address is suggested (`suggest: false` for a site without suggestions, `exclude` as on the component). `path` and `home` move the probe and the home link.
 
-The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) for a site's own tests.
+The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectNoTapHighlight`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) for a site's own tests.
 
 In CI the job of `.github/workflows/check.yml` runs them after the `check` action, with the browser cached by the Playwright version, see [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 
@@ -352,13 +356,13 @@ npm run test:e2e
 
 ## Versions
 
-Sites pin the actions to the major tag `v1` and the package to an exact tag such as `v1.1.0`. A compatible change gets a `v1.x.y` tag and moves `v1` to it; a breaking one starts `v2`.
+Sites pin the actions to the major tag `v2` and the package to an exact tag such as `v2.0.0`. A compatible change gets a `v2.x.y` tag and moves `v2` to it; a breaking one starts `v3`.
 
 ```bash
-git tag v1.0.1 && git tag -f v1 && git push origin v1.0.1 && git push -f origin v1
+git tag v2.0.1 && git tag -f v2 && git push origin v2.0.1 && git push -f origin v2
 ```
 
-The version in `package.json` goes up in a `chore: release 1.x.y` commit before the tag. Sites then move the package pin to the new tag.
+The version in `package.json` goes up in a `chore: release 2.x.y` commit before the tag. Sites then move the package pin to the new tag.
 
 ## License
 

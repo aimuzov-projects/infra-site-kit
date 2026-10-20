@@ -4,6 +4,7 @@ import {
 	expectAccessible,
 	expectHealthyPage,
 	expectMetrikaDeferred,
+	expectNoTapHighlight,
 	expectNotFound,
 	expectStableWidth,
 	expectThemePeek,
@@ -20,7 +21,12 @@ siteChecks({
 
 // Сайт без sitemap перечисляет страницы для проверки ширины сам.
 test.describe('without a sitemap', () => {
-	siteChecks({ pages: false, a11y: false, gutter: { paths: ['/', '/about/'] } })
+	siteChecks({
+		pages: false,
+		a11y: false,
+		gutter: { paths: ['/', '/about/'] },
+		tapHighlight: { paths: ['/', '/about/'] },
+	})
 })
 
 test('the sitemap paths drop the production domain', async ({ request }) => {
@@ -53,6 +59,11 @@ test.fail('a button without a name fails axe', async ({ page }) => {
 test.fail('a page without the scrollbar gutter fails the width check', async ({ page }) => {
 	await serve(page, '<html lang="en"><title>x</title><p style="min-height: 200vh">x</p></html>')
 	await expectStableWidth(page, ['/', '/about/'])
+})
+
+test.fail('a page with the tap highlight fails its check', async ({ page }) => {
+	await serve(page, '<html lang="en"><title>x</title><p>x</p></html>')
+	await expectNoTapHighlight(page, ['/about/'])
 })
 
 test.fail('a theme button without the peek fails its check', async ({ page }) => {

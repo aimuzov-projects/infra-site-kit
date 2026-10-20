@@ -29,7 +29,7 @@
 - [**Строка автора**](#строка-автора): общая строка футера для Astro и Svelte.
 - [**Тема**](#тема): логика переключателя темы и скрипт, который ставит выбор до отрисовки.
 - [**Подсмотреть тему**](#подсмотреть-тему): кнопка темы, которая показывает другую схему в круге вокруг себя.
-- [**Полоса прокрутки**](#полоса-прокрутки): ширина страницы одна, есть на ней прокрутка или нет.
+- [**Базовые стили**](#базовые-стили): умолчания корня — место под полосу прокрутки и без подсветки касания.
 - [**Яндекс Метрика**](#яндекс-метрика), которая грузится после первого взаимодействия и сама добавляет свои источники в CSP.
 - [**Страница 404**](#страница-404) с лицом автора и подсказками из sitemap.
 - [**Ченжлог для читателя**](#ченжлог-для-читателя): страница «Что нового», её формат и проверка релизного PR.
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov-projects/infra-site-kit/check@v1
+      - uses: aimuzov-projects/infra-site-kit/check@v2
 ```
 
 `.github/workflows/deploy.yml`, выкладка по релизу:
@@ -74,7 +74,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
       - id: release
-        uses: aimuzov-projects/infra-site-kit/release@v1
+        uses: aimuzov-projects/infra-site-kit/release@v2
 
   check:
     needs: release
@@ -92,7 +92,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov-projects/infra-site-kit/deploy@v1
+      - uses: aimuzov-projects/infra-site-kit/deploy@v2
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
@@ -106,7 +106,7 @@ release-please читает `release-please-config.json` (`"release-type": "node
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v1.8.0
+npm install -D github:aimuzov-projects/infra-site-kit#v2.0.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
@@ -194,17 +194,20 @@ import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
 
 По умолчанию круг показывает схему, противоположную текущей. Переключатель с кнопкой на каждую тему передаёт свою: `{@attach (node) => themePeek(node, { target: () => 'dark' })}`. Если цель совпадает с текущей схемой, показывать нечего и круга нет. Из нескольких кнопок рядом круг рисует только ближайшая к курсору, а клик по любой гасит его для всех.
 
-## Полоса прокрутки
+## Базовые стили
 
-Страница с прокруткой уже страницы без неё на ширину полосы окна, поэтому при переходе между ними шапка и всё, что прижато к правому краю, съезжает вбок. `scrollbar.css` держит место под полосу на корне каждой страницы (`scrollbar-gutter: stable`); при полосах поверх контента (macOS, телефоны) он ничего не меняет.
+В `base.css` — умолчания корня, общие для всех сайтов:
+
+- **Место под полосу прокрутки.** Страница с прокруткой уже страницы без неё на ширину полосы окна, поэтому при переходе между ними шапка и всё, что прижато к правому краю, съезжает вбок. Корень держит место под полосу на каждой странице (`scrollbar-gutter: stable`); при полосах поверх контента (macOS, телефоны) это ничего не меняет. Слои с `position: fixed` раскладываются по окну и заходят под место для полосы, поэтому сайт, который выравнивает такой слой по странице, меряет `document.body`, а не `innerWidth`.
+- **Без подсветки касания.** На касание WebKit заливает ссылку или кнопку серым прямоугольником, который не повторяет ни форму элемента, ни стиль сайта. Корень её выключает (`-webkit-tap-highlight-color: transparent`); свойство наследуется, и у кнопок и ссылок остаётся свой отклик на нажатие.
 
 ```astro
 ---
-import '@aimuzov-projects/infra-site-kit/scrollbar.css'
+import '@aimuzov-projects/infra-site-kit/base.css'
 ---
 ```
 
-Сайт подключает его один раз, в базовом layout. Слои с `position: fixed` раскладываются по окну и заходят под место для полосы, поэтому сайт, который выравнивает такой слой по странице, меряет `document.body`, а не `innerWidth`.
+Сайт подключает его один раз, в базовом layout. Новое общее правило для корня попадает сюда, и сайт получает его одним обновлением кита.
 
 ## Яндекс Метрика
 
@@ -318,11 +321,12 @@ siteChecks({
 - Каждая страница из `sitemap-index.xml` отвечает 200 и не пишет ошибок в консоль, включая исключения, упавшие запросы и нарушения CSP. `ignoreConsole` пропускает известные сообщения.
 - axe проверяет каждую страницу из sitemap по WCAG 2.1 AA в обеих схемах. `a11y: { disableRules, exclude }` сужает проверку, `a11y: false` выключает.
 - С `theme`: клик по кнопке меняет `color-scheme` корня, и выбор переживает перезагрузку (`persist: false`, если не должен), а наведение открывает круг с другой темой, который клик гасит (`peek: false` для кнопки без него).
-- Каждая страница из sitemap держит место под полосу прокрутки, и ширина у всех одна, есть прокрутка или нет (см. [Полоса прокрутки](#полоса-прокрутки)). Headless Chromium прячет полосы, поэтому проверка запускает свой браузер с обычными. Сайт без sitemap перечисляет страницы в `gutter: { paths }`, а `gutter: false` выключает проверку.
+- Каждая страница из sitemap держит место под полосу прокрутки, и ширина у всех одна, есть прокрутка или нет (см. [Базовые стили](#базовые-стили)). Headless Chromium прячет полосы, поэтому проверка запускает свой браузер с обычными. Сайт без sitemap перечисляет страницы в `gutter: { paths }`, а `gutter: false` выключает проверку.
+- Ни одна страница из sitemap не подсвечивает касание (см. [Базовые стили](#базовые-стили)). `tapHighlight: { paths }` и `tapHighlight: false` — как у `gutter`.
 - С `metrika`: счётчик на странице есть, но `tag.js` не запрашивается до первого действия. До самого Яндекса запросы не доходят.
 - С `notFound`: несуществующий адрес отвечает 404 с `noindex`, ссылкой на главную и рабочей «Назад», проходит axe в обеих схемах, а опечатка в адресе из sitemap попадает в подсказки (`suggest: false` для сайта без подсказок, `exclude` — как у компонента). `path` и `home` меняют проверочный адрес и ссылку на главную.
 
-Те же проверки экспортируются по отдельности (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) для собственных тестов сайта.
+Те же проверки экспортируются по отдельности (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectNoTapHighlight`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) для собственных тестов сайта.
 
 В CI их запускает job из `.github/workflows/check.yml` после action `check`, браузер кэшируется по версии Playwright, см. [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
 
@@ -350,13 +354,13 @@ npm run test:e2e
 
 ## Версии
 
-Actions сайты берут по мажорному тегу `v1`, пакет — по точному тегу вроде `v1.1.0`. Совместимая правка получает тег `v1.x.y` и переносит на него `v1`, ломающая начинает `v2`.
+Actions сайты берут по мажорному тегу `v2`, пакет — по точному тегу вроде `v2.0.0`. Совместимая правка получает тег `v2.x.y` и переносит на него `v2`, ломающая начинает `v3`.
 
 ```bash
-git tag v1.0.1 && git tag -f v1 && git push origin v1.0.1 && git push -f origin v1
+git tag v2.0.1 && git tag -f v2 && git push origin v2.0.1 && git push -f origin v2
 ```
 
-Версия в `package.json` поднимается коммитом `chore: release 1.x.y` до тега. Затем сайты переносят пин пакета на новый тег.
+Версия в `package.json` поднимается коммитом `chore: release 2.x.y` до тега. Затем сайты переносят пин пакета на новый тег.
 
 ## Лицензия
 

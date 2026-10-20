@@ -85,6 +85,9 @@ export function expectNotFoundSuggests(
  */
 export function expectStableWidth(page: Page, paths: string[]): Promise<void>
 
+/** У `body` прозрачный `-webkit-tap-highlight-color`: касание не подсвечивается. */
+export function expectNoTapHighlight(page: Page, paths: string[]): Promise<void>
+
 /** Регистрирует общие проверки как тесты текущего файла. */
 export function siteChecks(options?: {
 	/** Каждая страница из sitemap отвечает 200 без ошибок в консоли, по умолчанию `true`. */
@@ -105,8 +108,13 @@ export function siteChecks(options?: {
 	/** Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента. */
 	notFound?: boolean | { path?: string; home?: string; suggest?: boolean; exclude?: string[] }
 	/**
-	 * Полоса прокрутки не меняет ширину страниц из sitemap (`scrollbar.css`), по умолчанию `true`.
+	 * Полоса прокрутки не меняет ширину страниц из sitemap (`base.css`), по умолчанию `true`.
 	 * `paths` -- для сайта без sitemap: проверяются они, а sitemap не читается.
 	 */
 	gutter?: boolean | { paths?: string[] }
+	/**
+	 * Касание на страницах из sitemap не подсвечивается (`base.css`), по умолчанию `true`.
+	 * `paths` -- как у `gutter`.
+	 */
+	tapHighlight?: boolean | { paths?: string[] }
 }): void
