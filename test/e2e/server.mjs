@@ -4,7 +4,8 @@ import { join } from 'node:path'
 
 import { metrikaScript } from '../../site/metrika.js'
 
-// Двухстраничный сайт для e2e-проверок кита: sitemap с продовым доменом, кнопка темы
+// Двухстраничный сайт для e2e-проверок кита: sitemap с продовым доменом, место под полосу
+// прокрутки (about длиннее окна, главная нет), кнопка темы
 // на `theme.js` и `theme-peek.js`, ленивая Метрика и 404 на `not-found.js`. Всё как
 // у сайтов после сборки.
 
@@ -18,6 +19,7 @@ const page = (title, body, head = '') => `<!doctype html>
 		<meta charset="utf-8" />${head}
 		<title>${title}</title>
 		<link rel="stylesheet" href="/site/theme-peek.css" />
+		<link rel="stylesheet" href="/site/scrollbar.css" />
 		<style>
 			:root { color-scheme: light dark; }
 			:root[data-theme='light'] { color-scheme: light; }
@@ -71,7 +73,7 @@ const missing = page(
 
 const routes = {
 	'/': ['text/html', page('Home', '<p>The home page.</p>')],
-	'/about/': ['text/html', page('About', '<p>The about page.</p>')],
+	'/about/': ['text/html', page('About', '<p style="min-height: 200vh">The about page.</p>')],
 	'/sitemap-index.xml': [
 		'application/xml',
 		sitemap('sitemapindex', [`<sitemap><loc>${domain}/sitemap-0.xml</loc></sitemap>`]),

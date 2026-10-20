@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test'
 
 import { sitemapLocs } from '../site/sitemap.js'
 
-// Проверки, общие для всех сайтов: страницы из sitemap, доступность, переключатель темы
-// с подглядыванием, ленивая Яндекс Метрика и страница 404. `siteChecks()` регистрирует их как тесты,
+// Проверки, общие для всех сайтов: страницы из sitemap, доступность, ширина при полосе прокрутки,
+// переключатель темы с подглядыванием, ленивая Яндекс Метрика и страница 404. `siteChecks()` регистрирует их как тесты,
 // но каждую функцию можно звать и по отдельности внутри тестов самого сайта.
 
 /** @typedef {import('@playwright/test').Page} Page */
@@ -296,6 +296,38 @@ export async function expectNotFoundSuggests(page, request, { index, exclude = [
 }
 
 /**
+ * Проверяет, что полоса прокрутки окна не меняет ширину страниц: корень держит под неё
+ * место (`scrollbar-gutter: stable` из `scrollbar.css`), и у всех путей ширина одна,
+ * есть там прокрутка или нет.
+ *
+ * Ширину сравнивает только при обычных полосах, как в Windows. Headless Chromium их прячет,
+ * поэтому `page` нужна из браузера без `--hide-scrollbars`, как в `siteChecks()`.
+ *
+ * @param {Page} page
+ * @param {string[]} paths
+ */
+export async function expectStableWidth(page, paths) {
+	const widths = {}
+
+	for (const path of paths) {
+		await page.goto(path)
+		const { gutter, width } = await page.evaluate(() => ({
+			gutter: getComputedStyle(document.documentElement).scrollbarGutter,
+			width: document.documentElement.getBoundingClientRect().width,
+		}))
+
+		expect.soft(gutter, `${path} does not reserve the scrollbar gutter`).toContain('stable')
+		widths[path] = width
+	}
+
+	const first = Object.values(widths)[0]
+
+	expect
+		.soft(widths, 'pages differ in width by the scrollbar')
+		.toEqual(Object.fromEntries(Object.keys(widths).map((path) => [path, first])))
+}
+
+/**
  * Регистрирует общие проверки как тесты текущего файла.
  *
  * @param {object} [options]
@@ -308,8 +340,17 @@ export async function expectNotFoundSuggests(page, request, { index, exclude = [
  * @param {boolean | { path?: string }} [options.metrika] Страница со счётчиком Метрики.
  * @param {boolean | { path?: string, home?: string, suggest?: boolean, exclude?: string[] }} [options.notFound]
  * Общая 404 из not-found.astro, `suggest: false` -- для сайта без подсказок, `exclude` -- как у компонента.
+ * @param {boolean} [options.gutter] Полоса прокрутки не меняет ширину страниц из sitemap, по умолчанию `true`.
  */
-export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme, metrika, notFound } = {}) {
+export function siteChecks({
+	pages = true,
+	ignoreConsole = [],
+	a11y = {},
+	theme,
+	metrika,
+	notFound,
+	gutter = true,
+} = {}) {
 	test.describe('site', () => {
 		if (pages) {
 			test('every sitemap page answers 200 without console errors', async ({ page, request }) => {
@@ -332,6 +373,31 @@ export function siteChecks({ pages = true, ignoreConsole = [], a11y = {}, theme,
 					}
 				})
 			}
+		}
+
+		if (gutter) {
+			test('every sitemap page keeps its width with or without a scrollbar', async ({
+				playwright,
+				browserName,
+				request,
+				baseURL,
+				viewport,
+			}) => {
+				// Свой браузер: `--hide-scrollbars` у Chromium запускается на весь worker,
+				// а переопределить `launchOptions` внутри describe Playwright не даёт.
+				const browser = await playwright[browserName].launch({ ignoreDefaultArgs: ['--hide-scrollbars'] })
+
+				try {
+					const page = await browser.newPage({ baseURL, viewport })
+					const paths = await sitemapPaths(request)
+
+					if (notFound) paths.push((notFound === true ? {} : notFound).path ?? MISSING)
+
+					await expectStableWidth(page, paths)
+				} finally {
+					await browser.close()
+				}
+			})
 		}
 
 		if (theme) {
