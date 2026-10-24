@@ -40,7 +40,7 @@ Shared CI, linter and e2e configs for the aimuzov sites built from [infra-site-t
 
 - [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test`, the build and the reader changelog check. Packages from Ubuntu go in `apt-packages`.
 - [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) keeps the release PR up to date with the changelog from conventional commits; merging it cuts a tag and a GitHub release, the action then outputs `created` and `tag`. The release PR comes from `github-actions[bot]`, so GitHub holds its `pull_request` runs for approval; the action approves them, otherwise the required check would never come.
-- [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer. `ref` is the release tag to deploy, empty deploys the newest `main`. The server address and its `known_hosts` line live here.
+- [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer, and for `health-url` too when it is set: the static site says nothing about the backend. `ref` is the release tag to deploy, empty deploys the newest `main`. The server address and its `known_hosts` line live here.
 
 They are composite actions, not reusable workflows: the job stays in the site, so the required `check` status keeps its name, and a site adds its own steps before or after.
 
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov/infra-site-kit/check@v2
+      - uses: aimuzov/infra-site-kit/check@v3
 ```
 
 `.github/workflows/deploy.yml`, a deploy by release:
@@ -74,7 +74,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
       - id: release
-        uses: aimuzov/infra-site-kit/release@v2
+        uses: aimuzov/infra-site-kit/release@v3
 
   check:
     needs: release
@@ -92,10 +92,11 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov/infra-site-kit/deploy@v2
+      - uses: aimuzov/infra-site-kit/deploy@v3
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
+          health-url: https://example.com/api/health
           ref: ${{ needs.release.outputs.tag || inputs.tag }}
 ```
 
