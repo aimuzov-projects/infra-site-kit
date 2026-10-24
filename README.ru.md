@@ -24,7 +24,7 @@
 
 ## Что внутри
 
-- [**Actions**](#actions) `check`, `release` и `deploy`: шаги workflow сайтов, от `npm ci` до деплоя по SSH.
+- [**Actions**](#actions) `check` и `deploy`: шаги workflow сайтов, от `npm ci` до деплоя по SSH.
 - [**Конфиги**](#конфиги) Prettier, Stylelint (с BEM) и oxlint вместе с плагинами.
 - [**Строка автора**](#строка-автора): общая строка футера для Astro и Svelte.
 - [**Тема**](#тема): логика переключателя темы и скрипт, который ставит выбор до отрисовки.
@@ -39,7 +39,6 @@
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test`, сборка и проверка ченжлога для читателя. Пакеты из Ubuntu передаются в `apt-packages`.
-- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) держит релизный PR с changelog из conventional-коммитов; мерж этого PR создаёт тег и GitHub Release, а action отдаёт `created` и `tag`. Релизный PR открывает `github-actions[bot]`, поэтому GitHub придерживает его прогоны `pull_request` до одобрения; action их одобряет, иначе обязательный чек так и не придёт.
 - [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`, а если задан `health-url`, то и от него: статика сайта ничего не говорит о бэкенде. `ref` — тег релиза для выкладки, пустой выкладывает свежий `main`. Адрес сервера и его строка `known_hosts` живут здесь.
 
 Это composite actions, а не reusable workflows: job остаётся в сайте, поэтому обязательный статус `check` не меняет имя, а сайт добавляет свои шаги до или после.
@@ -54,27 +53,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov/infra-site-kit/check@v3
+      - uses: aimuzov/infra-site-kit/check@v4
 ```
 
-`.github/workflows/deploy.yml`, выкладка по релизу:
+`.github/workflows/deploy.yml`, выкладка по релизу. Job релиза — переиспользуемый [`release.yml`](https://github.com/aimuzov/.github/blob/main/.github/workflows/release.yml) из aimuzov/.github, общий с репозиториями, которые не сайты:
 
 ```yaml
 jobs:
   release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
       actions: write
-    outputs:
-      created: ${{ steps.release.outputs.created }}
-      tag: ${{ steps.release.outputs.tag }}
-    steps:
-      - id: release
-        uses: aimuzov/infra-site-kit/release@v3
+    uses: aimuzov/.github/.github/workflows/release.yml@v1
 
   check:
     needs: release
@@ -92,7 +85,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov/infra-site-kit/deploy@v3
+      - uses: aimuzov/infra-site-kit/deploy@v4
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
@@ -107,7 +100,7 @@ release-please читает `release-please-config.json` (`"release-type": "node
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov/infra-site-kit#v2.0.0
+npm install -D github:aimuzov/infra-site-kit#v4.0.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov/infra-site-kit/prettier"`
@@ -333,7 +326,7 @@ siteChecks({
 
 ## Renovate
 
-[`default.json`](default.json) — пресет Renovate для сайтов: обновления раз в неделю группами (Astro и Svelte, инструменты, Node, GitHub Actions), 3 дня выдержки после релиза. Мерж в `main` не выкладывает, выкладывает релиз, поэтому обновления, кроме мажорных, мержатся сами после зелёных проверок, а то, что попадает на прод (`dependencies`, базовые образы, Node), коммитится как `fix(deps)` — для него release-please сделает релиз. Сайт включает его файлом `renovate.json`:
+[`default.json`](default.json) — пресет Renovate для сайтов. Он наследует базовый пресет из [aimuzov/.github](https://github.com/aimuzov/.github/blob/main/default.json): обновления раз в неделю, 3 дня выдержки после релиза, `fix(deps)` для того, что попадает на прод, и самостоятельный мерж обновлений, кроме мажорных. Сверху добавляет группы сайтов: Astro и Svelte, инструменты, Node, и kit без выдержки. Сайт включает его файлом `renovate.json`:
 
 ```json
 { "extends": ["github>aimuzov/infra-site-kit"] }
@@ -355,13 +348,13 @@ npm run test:e2e
 
 ## Версии
 
-Actions сайты берут по мажорному тегу `v2`, пакет — по точному тегу вроде `v2.0.0`. Совместимая правка получает тег `v2.x.y` и переносит на него `v2`, ломающая начинает `v3`.
+Actions сайты берут по мажорному тегу `v4`, пакет — по точному тегу вроде `v4.0.0`. Совместимая правка получает тег `v4.x.y` и переносит на него `v4`, ломающая начинает `v5`.
 
 ```bash
-git tag v2.0.1 && git tag -f v2 && git push origin v2.0.1 && git push -f origin v2
+git tag v4.0.1 && git tag -f v4 && git push origin v4.0.1 && git push -f origin v4
 ```
 
-Версия в `package.json` поднимается коммитом `chore: release 2.x.y` до тега. Затем сайты переносят пин пакета на новый тег.
+Версия в `package.json` поднимается коммитом `chore: release 4.x.y` до тега. Затем сайты переносят пин пакета на новый тег.
 
 ## Лицензия
 

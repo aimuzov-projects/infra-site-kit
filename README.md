@@ -18,13 +18,13 @@
 </p>
 
 <h3 align="center">One place for what every site shares</h3>
-<p align="center">Check, release and deploy actions, linter and Playwright configs, the author credit, the theme peek and Yandex Metrika</p>
+<p align="center">Check and deploy actions, linter and Playwright configs, the author credit, the theme peek and Yandex Metrika</p>
 
 Shared CI, linter and e2e configs for the aimuzov sites built from [infra-site-template](https://github.com/aimuzov/infra-site-template). A fix to the checks, the deploy or the code style lands here once instead of in every site.
 
 ## What's inside
 
-- [**Actions**](#actions) `check`, `release` and `deploy`: the steps of the site workflows, from `npm ci` to the deploy over SSH.
+- [**Actions**](#actions) `check` and `deploy`: the steps of the site workflows, from `npm ci` to the deploy over SSH.
 - [**Configs**](#configs) of Prettier, Stylelint (BEM included) and oxlint, with their plugins.
 - [**Author credit**](#author-credit): the shared footer line for Astro and Svelte.
 - [**Theme**](#theme): the theme switch logic and the script that applies the choice before the first paint.
@@ -39,7 +39,6 @@ Shared CI, linter and e2e configs for the aimuzov sites built from [infra-site-t
 ## Actions
 
 - [`check`](check/action.yml): `npm ci`, then Prettier, oxlint, stylelint, `astro check` and `svelte-check`, `node --test`, the build and the reader changelog check. Packages from Ubuntu go in `apt-packages`.
-- [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) keeps the release PR up to date with the changelog from conventional commits; merging it cuts a tag and a GitHub release, the action then outputs `created` and `tag`. The release PR comes from `github-actions[bot]`, so GitHub holds its `pull_request` runs for approval; the action approves them, otherwise the required check would never come.
 - [`deploy`](deploy/action.yml): SSH to the projects server, where the key runs `deploy/site.sh` of infra-server for the site, then waits for `url` to answer, and for `health-url` too when it is set: the static site says nothing about the backend. `ref` is the release tag to deploy, empty deploys the newest `main`. The server address and its `known_hosts` line live here.
 
 They are composite actions, not reusable workflows: the job stays in the site, so the required `check` status keeps its name, and a site adds its own steps before or after.
@@ -54,27 +53,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov/infra-site-kit/check@v3
+      - uses: aimuzov/infra-site-kit/check@v4
 ```
 
-`.github/workflows/deploy.yml`, a deploy by release:
+`.github/workflows/deploy.yml`, a deploy by release. The release job is the reusable [`release.yml`](https://github.com/aimuzov/.github/blob/main/.github/workflows/release.yml) of aimuzov/.github, shared with repositories that are not sites:
 
 ```yaml
 jobs:
   release:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
       actions: write
-    outputs:
-      created: ${{ steps.release.outputs.created }}
-      tag: ${{ steps.release.outputs.tag }}
-    steps:
-      - id: release
-        uses: aimuzov/infra-site-kit/release@v3
+    uses: aimuzov/.github/.github/workflows/release.yml@v1
 
   check:
     needs: release
@@ -92,7 +85,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov/infra-site-kit/deploy@v3
+      - uses: aimuzov/infra-site-kit/deploy@v4
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
@@ -107,7 +100,7 @@ release-please reads `release-please-config.json` (`"release-type": "node"`, `"p
 The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
 
 ```bash
-npm install -D github:aimuzov/infra-site-kit#v2.0.0
+npm install -D github:aimuzov/infra-site-kit#v4.0.0
 ```
 
 - `.prettierrc.json`: `"@aimuzov/infra-site-kit/prettier"`
@@ -335,7 +328,7 @@ In CI the job of `.github/workflows/check.yml` runs them after the `check` actio
 
 ## Renovate
 
-[`default.json`](default.json) is the Renovate preset of the sites: weekly grouped updates (Astro and Svelte, tooling, Node, GitHub Actions), a 3-day wait after a release. A merge into `main` doesn't deploy, a release does, so non-major updates merge themselves once the checks pass, and what ends up in production (`dependencies`, base images, Node) is committed as `fix(deps)`, which makes release-please cut a release for it. A site turns it on with `renovate.json`:
+[`default.json`](default.json) is the Renovate preset of the sites. It extends the base preset of [aimuzov/.github](https://github.com/aimuzov/.github/blob/main/default.json), which brings the weekly schedule, the 3-day wait after a release, `fix(deps)` for what ends up in production and non-major updates that merge themselves, and adds the site groups: Astro and Svelte, tooling, Node, and no wait for this kit. A site turns it on with `renovate.json`:
 
 ```json
 { "extends": ["github>aimuzov/infra-site-kit"] }
@@ -357,13 +350,13 @@ npm run test:e2e
 
 ## Versions
 
-Sites pin the actions to the major tag `v2` and the package to an exact tag such as `v2.0.0`. A compatible change gets a `v2.x.y` tag and moves `v2` to it; a breaking one starts `v3`.
+Sites pin the actions to the major tag `v4` and the package to an exact tag such as `v4.0.0`. A compatible change gets a `v4.x.y` tag and moves `v4` to it; a breaking one starts `v5`.
 
 ```bash
-git tag v2.0.1 && git tag -f v2 && git push origin v2.0.1 && git push -f origin v2
+git tag v4.0.1 && git tag -f v4 && git push origin v4.0.1 && git push -f origin v4
 ```
 
-The version in `package.json` goes up in a `chore: release 2.x.y` commit before the tag. Sites then move the package pin to the new tag.
+The version in `package.json` goes up in a `chore: release 4.x.y` commit before the tag. Sites then move the package pin to the new tag.
 
 ## License
 
