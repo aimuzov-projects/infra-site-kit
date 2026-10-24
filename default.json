@@ -1,6 +1,6 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"description": "Renovate preset for the aimuzov-projects sites: weekly grouped updates, non-major ones merge themselves",
+	"description": "Renovate preset for the aimuzov sites: weekly grouped updates, non-major ones merge themselves",
 	"extends": ["config:recommended", ":semanticCommits", ":semanticCommitTypeAll(build)", "schedule:weekly"],
 	"timezone": "Europe/Moscow",
 	"minimumReleaseAge": "3 days",
@@ -35,7 +35,7 @@
 		},
 		{
 			"description": "Shared CI and configs: released by hand, so no age wait",
-			"matchPackageNames": ["@aimuzov-projects/infra-site-kit", "aimuzov-projects/infra-site-kit"],
+			"matchPackageNames": ["@aimuzov/infra-site-kit", "aimuzov/infra-site-kit"],
 			"minimumReleaseAge": null
 		},
 		{
