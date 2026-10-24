@@ -8,19 +8,19 @@
 </p>
 
 <p align="center">
-	<a href="https://github.com/aimuzov-projects/infra-site-kit/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov-projects/infra-site-kit/check.yml?branch=main&label=check" alt="Check"></a>
-	<a href="https://github.com/aimuzov-projects/infra-site-kit/tags"><img src="https://img.shields.io/github/v/tag/aimuzov-projects/infra-site-kit?sort=semver&label=version" alt="Version"></a>
-	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov-projects%2Finfra-site-kit%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
-	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
-	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
-	<a href="https://playwright.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/@playwright/test?label=playwright&color=2ead33" alt="Playwright"></a>
-	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov-projects/infra-site-kit" alt="License"></a>
+	<a href="https://github.com/aimuzov/infra-site-kit/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/infra-site-kit/check.yml?branch=main&label=check" alt="Check"></a>
+	<a href="https://github.com/aimuzov/infra-site-kit/tags"><img src="https://img.shields.io/github/v/tag/aimuzov/infra-site-kit?sort=semver&label=version" alt="Version"></a>
+	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov%2Finfra-site-kit%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
+	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/infra-site-kit/peer/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
+	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/infra-site-kit/peer/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
+	<a href="https://playwright.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/infra-site-kit/peer/@playwright/test?label=playwright&color=2ead33" alt="Playwright"></a>
+	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov/infra-site-kit" alt="License"></a>
 </p>
 
 <h3 align="center">Одно место для того, что общее у всех сайтов</h3>
 <p align="center">Actions проверки, релиза и деплоя, конфиги линтеров и Playwright, строка автора, подсмотр темы и Яндекс Метрика</p>
 
-Общий CI, конфиги линтеров и e2e для сайтов aimuzov-projects, собранных из [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). Правка проверок, деплоя или стиля кода попадает сюда один раз, а не в каждый сайт.
+Общий CI, конфиги линтеров и e2e для сайтов aimuzov, собранных из [infra-site-template](https://github.com/aimuzov/infra-site-template). Правка проверок, деплоя или стиля кода попадает сюда один раз, а не в каждый сайт.
 
 ## Что внутри
 
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov-projects/infra-site-kit/check@v2
+      - uses: aimuzov/infra-site-kit/check@v2
 ```
 
 `.github/workflows/deploy.yml`, выкладка по релизу:
@@ -74,7 +74,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
       - id: release
-        uses: aimuzov-projects/infra-site-kit/release@v2
+        uses: aimuzov/infra-site-kit/release@v2
 
   check:
     needs: release
@@ -92,7 +92,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov-projects/infra-site-kit/deploy@v2
+      - uses: aimuzov/infra-site-kit/deploy@v2
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
@@ -106,12 +106,12 @@ release-please читает `release-please-config.json` (`"release-type": "node
 Репо ещё и npm-пакет с конфигами Prettier, Stylelint (с BEM) и oxlint. Их плагины — зависимости пакета, а сами Prettier, Stylelint и oxlint остаются в сайте, чтобы их бинарники были там.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v2.0.0
+npm install -D github:aimuzov/infra-site-kit#v2.0.0
 ```
 
-- `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
-- `stylelint.config.mjs`: `export default { extends: ['@aimuzov-projects/infra-site-kit/stylelint'] }`, свои `overrides` сайта — рядом с `extends`
-- `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov-projects/infra-site-kit/oxlint.json"] }`
+- `.prettierrc.json`: `"@aimuzov/infra-site-kit/prettier"`
+- `stylelint.config.mjs`: `export default { extends: ['@aimuzov/infra-site-kit/stylelint'] }`, свои `overrides` сайта — рядом с `extends`
+- `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov/infra-site-kit/oxlint.json"] }`
 
 Конфиг oxlint требует пустую строку перед `return` и `throw`, вокруг блоков (`if`, циклы, `try`, `switch`), после групп `const`/`let` и вокруг многострочных выражений. Расставляет их `oxlint --fix`; Prettier их только сохраняет, поэтому сайт запускает `oxlint --fix` перед `prettier --write`.
 
@@ -127,10 +127,10 @@ npm забирает пакет архивом с GitHub, так что git в �
 
 ```astro
 ---
-import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
+import Credit from '@aimuzov/infra-site-kit/credit.astro'
 ---
 
-<Credit repo="https://github.com/aimuzov-projects/example" />
+<Credit repo="https://github.com/aimuzov/example" />
 ```
 
 По умолчанию подпись растягивается на ширину контейнера: автор слева, «Исходный код» справа. `align="center"` ставит обе части по центру.
@@ -149,7 +149,7 @@ import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
 
 ```astro
 ---
-import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
+import ThemeBoot from '@aimuzov/infra-site-kit/theme-boot.astro'
 ---
 
 <head>
@@ -159,7 +159,7 @@ import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
 
 ```svelte
 <script>
-	import { toggleTheme, watchTheme } from '@aimuzov-projects/infra-site-kit/theme.js'
+	import { toggleTheme, watchTheme } from '@aimuzov/infra-site-kit/theme.js'
 
 	let theme = $state('auto')
 
@@ -183,8 +183,8 @@ import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
 
 ```svelte
 <script>
-	import '@aimuzov-projects/infra-site-kit/theme-peek.css'
-	import { themePeek } from '@aimuzov-projects/infra-site-kit/theme-peek.js'
+	import '@aimuzov/infra-site-kit/theme-peek.css'
+	import { themePeek } from '@aimuzov/infra-site-kit/theme-peek.js'
 </script>
 
 <button onclick={cycle} {@attach themePeek}>…</button>
@@ -203,7 +203,7 @@ import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
 
 ```astro
 ---
-import '@aimuzov-projects/infra-site-kit/base.css'
+import '@aimuzov/infra-site-kit/base.css'
 ---
 ```
 
@@ -218,8 +218,8 @@ import '@aimuzov-projects/infra-site-kit/base.css'
 
 ```astro
 ---
-import Metrika from '@aimuzov-projects/infra-site-kit/metrika.astro'
-import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
+import Metrika from '@aimuzov/infra-site-kit/metrika.astro'
+import MetrikaPixel from '@aimuzov/infra-site-kit/metrika-pixel.astro'
 ---
 
 <head>
@@ -242,7 +242,7 @@ import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
 
 ```astro
 ---
-import NotFound from '@aimuzov-projects/infra-site-kit/not-found.astro'
+import NotFound from '@aimuzov/infra-site-kit/not-found.astro'
 import Base from '#frontend/layouts/base.astro'
 ---
 
@@ -271,7 +271,7 @@ import Base from '#frontend/layouts/base.astro'
 
 ```astro
 ---
-import Changelog from '@aimuzov-projects/infra-site-kit/changelog.astro'
+import Changelog from '@aimuzov/infra-site-kit/changelog.astro'
 import * as lucide from 'lucide-static'
 import releases from '#frontend/data/changelog.json'
 import Base from '#frontend/layouts/base.astro'
@@ -302,7 +302,7 @@ npx playwright install chromium
 `playwright.config.ts`:
 
 ```ts
-export { default } from '@aimuzov-projects/infra-site-kit/playwright'
+export { default } from '@aimuzov/infra-site-kit/playwright'
 ```
 
 Пресет гоняет `e2e/` в Chromium против продовой сборки: `astro build && astro preview` на порту 4399 (`E2E_PORT` его меняет), каждый прогон собирает заново. Сайт расширяет его через `defineConfig(preset, { … })`; свой сервер там, например API, запускается рядом с preview.
@@ -310,7 +310,7 @@ export { default } from '@aimuzov-projects/infra-site-kit/playwright'
 `e2e/site.spec.ts`:
 
 ```ts
-import { siteChecks } from '@aimuzov-projects/infra-site-kit/playwright/checks'
+import { siteChecks } from '@aimuzov/infra-site-kit/playwright/checks'
 
 siteChecks({
 	theme: { button: (page) => page.getByRole('button', { name: /^Тема:/ }) },
@@ -328,14 +328,14 @@ siteChecks({
 
 Те же проверки экспортируются по отдельности (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectNoTapHighlight`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) для собственных тестов сайта.
 
-В CI их запускает job из `.github/workflows/check.yml` после action `check`, браузер кэшируется по версии Playwright, см. [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
+В CI их запускает job из `.github/workflows/check.yml` после action `check`, браузер кэшируется по версии Playwright, см. [infra-site-template](https://github.com/aimuzov/infra-site-template).
 
 ## Renovate
 
 [`default.json`](default.json) — пресет Renovate для сайтов: обновления раз в неделю группами (Astro и Svelte, инструменты, Node, GitHub Actions), 3 дня выдержки после релиза. Мерж в `main` не выкладывает, выкладывает релиз, поэтому обновления, кроме мажорных, мержатся сами после зелёных проверок, а то, что попадает на прод (`dependencies`, базовые образы, Node), коммитится как `fix(deps)` — для него release-please сделает релиз. Сайт включает его файлом `renovate.json`:
 
 ```json
-{ "extends": ["github>aimuzov-projects/infra-site-kit"] }
+{ "extends": ["github>aimuzov/infra-site-kit"] }
 ```
 
 ## Разработка

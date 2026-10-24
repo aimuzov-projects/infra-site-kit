@@ -8,19 +8,19 @@
 </p>
 
 <p align="center">
-	<a href="https://github.com/aimuzov-projects/infra-site-kit/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov-projects/infra-site-kit/check.yml?branch=main&label=check" alt="Check"></a>
-	<a href="https://github.com/aimuzov-projects/infra-site-kit/tags"><img src="https://img.shields.io/github/v/tag/aimuzov-projects/infra-site-kit?sort=semver&label=version" alt="Version"></a>
-	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov-projects%2Finfra-site-kit%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
-	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
-	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
-	<a href="https://playwright.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov-projects/infra-site-kit/peer/@playwright/test?label=playwright&color=2ead33" alt="Playwright"></a>
-	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov-projects/infra-site-kit" alt="License"></a>
+	<a href="https://github.com/aimuzov/infra-site-kit/actions/workflows/check.yml"><img src="https://img.shields.io/github/actions/workflow/status/aimuzov/infra-site-kit/check.yml?branch=main&label=check" alt="Check"></a>
+	<a href="https://github.com/aimuzov/infra-site-kit/tags"><img src="https://img.shields.io/github/v/tag/aimuzov/infra-site-kit?sort=semver&label=version" alt="Version"></a>
+	<a href="package.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Faimuzov%2Finfra-site-kit%2Fmain%2Fpackage.json&query=%24.engines.node&label=node&logo=nodedotjs&logoColor=white&color=5fa04e" alt="Node"></a>
+	<a href="https://astro.build"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/infra-site-kit/peer/astro?logo=astro&logoColor=white&color=bc52ee" alt="Astro"></a>
+	<a href="https://svelte.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/infra-site-kit/peer/svelte?logo=svelte&logoColor=white&color=ff3e00" alt="Svelte"></a>
+	<a href="https://playwright.dev"><img src="https://img.shields.io/github/package-json/dependency-version/aimuzov/infra-site-kit/peer/@playwright/test?label=playwright&color=2ead33" alt="Playwright"></a>
+	<a href="LICENSE"><img src="https://img.shields.io/github/license/aimuzov/infra-site-kit" alt="License"></a>
 </p>
 
 <h3 align="center">One place for what every site shares</h3>
 <p align="center">Check, release and deploy actions, linter and Playwright configs, the author credit, the theme peek and Yandex Metrika</p>
 
-Shared CI, linter and e2e configs for the aimuzov-projects sites built from [infra-site-template](https://github.com/aimuzov-projects/infra-site-template). A fix to the checks, the deploy or the code style lands here once instead of in every site.
+Shared CI, linter and e2e configs for the aimuzov sites built from [infra-site-template](https://github.com/aimuzov/infra-site-template). A fix to the checks, the deploy or the code style lands here once instead of in every site.
 
 ## What's inside
 
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov-projects/infra-site-kit/check@v2
+      - uses: aimuzov/infra-site-kit/check@v2
 ```
 
 `.github/workflows/deploy.yml`, a deploy by release:
@@ -74,7 +74,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
       - id: release
-        uses: aimuzov-projects/infra-site-kit/release@v2
+        uses: aimuzov/infra-site-kit/release@v2
 
   check:
     needs: release
@@ -92,7 +92,7 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov-projects/infra-site-kit/deploy@v2
+      - uses: aimuzov/infra-site-kit/deploy@v2
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
@@ -106,12 +106,12 @@ release-please reads `release-please-config.json` (`"release-type": "node"`, `"p
 The repo is also an npm package with the Prettier, Stylelint (BEM included) and oxlint configs. Their plugins are dependencies of the package; Prettier, Stylelint and oxlint stay in the site, so their binaries are there.
 
 ```bash
-npm install -D github:aimuzov-projects/infra-site-kit#v2.0.0
+npm install -D github:aimuzov/infra-site-kit#v2.0.0
 ```
 
-- `.prettierrc.json`: `"@aimuzov-projects/infra-site-kit/prettier"`
-- `stylelint.config.mjs`: `export default { extends: ['@aimuzov-projects/infra-site-kit/stylelint'] }`, the site's own `overrides` go next to `extends`
-- `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov-projects/infra-site-kit/oxlint.json"] }`
+- `.prettierrc.json`: `"@aimuzov/infra-site-kit/prettier"`
+- `stylelint.config.mjs`: `export default { extends: ['@aimuzov/infra-site-kit/stylelint'] }`, the site's own `overrides` go next to `extends`
+- `.oxlintrc.json`: `{ "extends": ["./node_modules/@aimuzov/infra-site-kit/oxlint.json"] }`
 
 The oxlint config wants blank lines before `return` and `throw`, around blocks (`if`, loops, `try`, `switch`), after `const`/`let` groups and around multiline expressions. `oxlint --fix` puts them in; Prettier only keeps them, so the site runs `oxlint --fix` before `prettier --write`.
 
@@ -127,10 +127,10 @@ The credit line every site shares: "2026 © Сделано с любовью [ma
 
 ```astro
 ---
-import Credit from '@aimuzov-projects/infra-site-kit/credit.astro'
+import Credit from '@aimuzov/infra-site-kit/credit.astro'
 ---
 
-<Credit repo="https://github.com/aimuzov-projects/example" />
+<Credit repo="https://github.com/aimuzov/example" />
 ```
 
 By default the credit stretches over the container: the author on the left, "Исходный код" on the right. `align="center"` keeps both parts in the middle.
@@ -149,7 +149,7 @@ A click always flips the visible scheme, just like the [peek](#theme-peek) circl
 
 ```astro
 ---
-import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
+import ThemeBoot from '@aimuzov/infra-site-kit/theme-boot.astro'
 ---
 
 <head>
@@ -159,7 +159,7 @@ import ThemeBoot from '@aimuzov-projects/infra-site-kit/theme-boot.astro'
 
 ```svelte
 <script>
-	import { toggleTheme, watchTheme } from '@aimuzov-projects/infra-site-kit/theme.js'
+	import { toggleTheme, watchTheme } from '@aimuzov/infra-site-kit/theme.js'
 
 	let theme = $state('auto')
 
@@ -183,8 +183,8 @@ The circle holds a copy of the page painted in the other scheme: `color-scheme` 
 
 ```svelte
 <script>
-	import '@aimuzov-projects/infra-site-kit/theme-peek.css'
-	import { themePeek } from '@aimuzov-projects/infra-site-kit/theme-peek.js'
+	import '@aimuzov/infra-site-kit/theme-peek.css'
+	import { themePeek } from '@aimuzov/infra-site-kit/theme-peek.js'
 </script>
 
 <button onclick={cycle} {@attach themePeek}>…</button>
@@ -205,7 +205,7 @@ A button with other controls right next to it passes `{ approach: false }`: the 
 
 ```astro
 ---
-import '@aimuzov-projects/infra-site-kit/base.css'
+import '@aimuzov/infra-site-kit/base.css'
 ---
 ```
 
@@ -220,8 +220,8 @@ The counter loads `tag.js` on the first interaction or 4 s after `load`, so the 
 
 ```astro
 ---
-import Metrika from '@aimuzov-projects/infra-site-kit/metrika.astro'
-import MetrikaPixel from '@aimuzov-projects/infra-site-kit/metrika-pixel.astro'
+import Metrika from '@aimuzov/infra-site-kit/metrika.astro'
+import MetrikaPixel from '@aimuzov/infra-site-kit/metrika-pixel.astro'
 ---
 
 <head>
@@ -244,7 +244,7 @@ The 404 every site shares: a big "4 [face] 4" with the author's face in place of
 
 ```astro
 ---
-import NotFound from '@aimuzov-projects/infra-site-kit/not-found.astro'
+import NotFound from '@aimuzov/infra-site-kit/not-found.astro'
 import Base from '#frontend/layouts/base.astro'
 ---
 
@@ -273,7 +273,7 @@ The "Что нового" page: what changed on the site in the reader's words, 
 
 ```astro
 ---
-import Changelog from '@aimuzov-projects/infra-site-kit/changelog.astro'
+import Changelog from '@aimuzov/infra-site-kit/changelog.astro'
 import * as lucide from 'lucide-static'
 import releases from '#frontend/data/changelog.json'
 import Base from '#frontend/layouts/base.astro'
@@ -304,7 +304,7 @@ npx playwright install chromium
 `playwright.config.ts`:
 
 ```ts
-export { default } from '@aimuzov-projects/infra-site-kit/playwright'
+export { default } from '@aimuzov/infra-site-kit/playwright'
 ```
 
 The preset runs `e2e/` in Chromium against the production build: `astro build && astro preview` on port 4399 (`E2E_PORT` moves it), a fresh build every run. A site extends it with `defineConfig(preset, { … })`; a server of its own there, such as the API, is started next to the preview.
@@ -312,7 +312,7 @@ The preset runs `e2e/` in Chromium against the production build: `astro build &&
 `e2e/site.spec.ts`:
 
 ```ts
-import { siteChecks } from '@aimuzov-projects/infra-site-kit/playwright/checks'
+import { siteChecks } from '@aimuzov/infra-site-kit/playwright/checks'
 
 siteChecks({
 	theme: { button: (page) => page.getByRole('button', { name: /^Тема:/ }) },
@@ -330,14 +330,14 @@ siteChecks({
 
 The same checks are exported one by one (`expectHealthyPage`, `expectAccessible`, `expectStableWidth`, `expectNoTapHighlight`, `expectThemeToggle`, `expectThemePeek`, `expectMetrikaDeferred`, `expectNotFound`, `expectNotFoundSuggests`, `sitemapPaths`) for a site's own tests.
 
-In CI the job of `.github/workflows/check.yml` runs them after the `check` action, with the browser cached by the Playwright version, see [infra-site-template](https://github.com/aimuzov-projects/infra-site-template).
+In CI the job of `.github/workflows/check.yml` runs them after the `check` action, with the browser cached by the Playwright version, see [infra-site-template](https://github.com/aimuzov/infra-site-template).
 
 ## Renovate
 
 [`default.json`](default.json) is the Renovate preset of the sites: weekly grouped updates (Astro and Svelte, tooling, Node, GitHub Actions), a 3-day wait after a release. A merge into `main` doesn't deploy, a release does, so non-major updates merge themselves once the checks pass, and what ends up in production (`dependencies`, base images, Node) is committed as `fix(deps)`, which makes release-please cut a release for it. A site turns it on with `renovate.json`:
 
 ```json
-{ "extends": ["github>aimuzov-projects/infra-site-kit"] }
+{ "extends": ["github>aimuzov/infra-site-kit"] }
 ```
 
 ## Development

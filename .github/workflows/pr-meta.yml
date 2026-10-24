@@ -1,7 +1,7 @@
 name: PR meta
 
 # Назначает исполнителя PR и вешает метки по его заголовку,
-# сама логика живёт в aimuzov-projects/.github.
+# сама логика живёт в aimuzov/.github.
 #
 # `pull_request_target` нужен для того чтобы PR от Renovate получали токен
 # с правом записи, при этом ничего из самого PR не чекаутится и не запускается.
@@ -15,4 +15,4 @@ permissions:
 
 jobs:
   meta:
-    uses: aimuzov-projects/.github/.github/workflows/pr-meta.yml@main
+    uses: aimuzov/.github/.github/workflows/pr-meta.yml@main
