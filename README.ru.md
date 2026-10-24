@@ -40,7 +40,7 @@
 
 - [`check`](check/action.yml): `npm ci`, затем Prettier, oxlint, stylelint, `astro check` и `svelte-check`, `node --test`, сборка и проверка ченжлога для читателя. Пакеты из Ubuntu передаются в `apt-packages`.
 - [`release`](release/action.yml): [release-please](https://github.com/googleapis/release-please) держит релизный PR с changelog из conventional-коммитов; мерж этого PR создаёт тег и GitHub Release, а action отдаёт `created` и `tag`. Релизный PR открывает `github-actions[bot]`, поэтому GitHub придерживает его прогоны `pull_request` до одобрения; action их одобряет, иначе обязательный чек так и не придёт.
-- [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`. `ref` — тег релиза для выкладки, пустой выкладывает свежий `main`. Адрес сервера и его строка `known_hosts` живут здесь.
+- [`deploy`](deploy/action.yml): SSH на сервер проектов, где ключ запускает `deploy/site.sh` из infra-server для этого сайта, затем ждёт ответа от `url`, а если задан `health-url`, то и от него: статика сайта ничего не говорит о бэкенде. `ref` — тег релиза для выкладки, пустой выкладывает свежий `main`. Адрес сервера и его строка `known_hosts` живут здесь.
 
 Это composite actions, а не reusable workflows: job остаётся в сайте, поэтому обязательный статус `check` не меняет имя, а сайт добавляет свои шаги до или после.
 
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: aimuzov/infra-site-kit/check@v2
+      - uses: aimuzov/infra-site-kit/check@v3
 ```
 
 `.github/workflows/deploy.yml`, выкладка по релизу:
@@ -74,7 +74,7 @@ jobs:
       tag: ${{ steps.release.outputs.tag }}
     steps:
       - id: release
-        uses: aimuzov/infra-site-kit/release@v2
+        uses: aimuzov/infra-site-kit/release@v3
 
   check:
     needs: release
@@ -92,10 +92,11 @@ jobs:
       name: production
       url: https://example.com
     steps:
-      - uses: aimuzov/infra-site-kit/deploy@v2
+      - uses: aimuzov/infra-site-kit/deploy@v3
         with:
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
           url: https://example.com/
+          health-url: https://example.com/api/health
           ref: ${{ needs.release.outputs.tag || inputs.tag }}
 ```
 
